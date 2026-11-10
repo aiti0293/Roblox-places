@@ -4,7 +4,7 @@ import Lenis from 'lenis'
 import Scene from './three/Scene'
 import { buildTimeline, attachScroll, gsap, ScrollTrigger } from './timeline'
 import { sceneState, floorAt, SCROLL_VH } from './config'
-import { Header, Hero, CatalogButton, FloorMarker, Zones, Views, PlanIntro, Tour, Contact } from './ui/Overlays'
+import { DemoBadge, Header, Hero, CatalogButton, FloorMarker, Zones, Views, PlanIntro, Tour, Contact } from './ui/Overlays'
 
 function detect() {
   const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches
@@ -118,6 +118,7 @@ export default function App() {
       </div>
 
       <Header onNav={onNav} />
+      <DemoBadge />
       <main>
         <Hero onNav={onNav} />
         <FloorMarker ref={floorRef} />

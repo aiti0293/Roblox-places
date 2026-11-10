@@ -1,6 +1,25 @@
 import { forwardRef, useEffect, useState } from 'react'
 import { ROOMS, ANCHORS, FLAT, OFFICE, PLAN_FLOOR } from '../config'
 
+// Demo build (VITE_DEMO=1): a shareable concept presentation that must not pass itself off
+// as the developer's official site — no lead form, no contacts, a visible "concept" label.
+export const DEMO = import.meta.env.VITE_DEMO === '1'
+const OFFICIAL_URL = 'https://xn----gtbnarbjcw3a7b.xn--p1ai/'
+
+export function DemoBadge() {
+  if (!DEMO) return null
+  return (
+    <div className="pointer-events-none fixed inset-x-0 top-[78px] z-30 flex justify-center px-4 md:top-[96px]">
+      <p className="pointer-events-auto rounded-full bg-paper/95 px-4 py-1.5 text-center text-[12px] font-semibold text-brand shadow-lg">
+        Концепт 3D-презентации · не официальный сайт.{' '}
+        <a href={OFFICIAL_URL} target="_blank" rel="noreferrer" className="underline underline-offset-2">
+          Официальный сайт
+        </a>
+      </p>
+    </div>
+  )
+}
+
 /* ── brand atoms ─────────────────────────────────────────────── */
 
 const LeafDash = ({ flip = false }) => (
@@ -75,7 +94,7 @@ export function Header({ onNav }) {
           </nav>
           <div className="flex items-center gap-3">
             <a href="#contact" onClick={go(ANCHORS.contact)} className="pill pill-taupe h-11 px-4 text-[12px] md:h-12 md:px-6 md:text-[13px]">
-              Заказать звонок
+              {DEMO ? "Контакты" : "Заказать звонок"}
             </a>
             <button
               type="button"
@@ -120,10 +139,12 @@ export function Header({ onNav }) {
             </a>
           ))}
         </nav>
-        <div className="mt-12 flex flex-col gap-1 text-paper/75">
-          <a href={OFFICE.phoneHref} className="font-display text-[28px] text-paper">{OFFICE.phone}</a>
-          <span>{OFFICE.address} · {OFFICE.hours[0]}</span>
-        </div>
+        {!DEMO && (
+          <div className="mt-12 flex flex-col gap-1 text-paper/75">
+            <a href={OFFICE.phoneHref} className="font-display text-[28px] text-paper">{OFFICE.phone}</a>
+            <span>{OFFICE.address} · {OFFICE.hours[0]}</span>
+          </div>
+        )}
       </div>
     </>
   )
@@ -410,6 +431,18 @@ export function Contact() {
             <span data-r className="block">Хотите узнать</span>
             <span data-r className="block">больше?</span>
           </h2>
+          {DEMO ? (
+            <div data-r>
+              <p className="mt-3 max-w-[480px] text-[16px] leading-relaxed text-paper/80 md:text-[18px]">
+                Это концепт 3D-презентации дома, а не официальный сайт застройщика. Заявки здесь не принимаются —
+                контакты отдела продаж и актуальные условия смотрите на официальном сайте.
+              </p>
+              <a href={OFFICIAL_URL} target="_blank" rel="noreferrer" className="pill pill-sage mt-7">
+                Открыть дом-мичурин.рф <Arrow />
+              </a>
+            </div>
+          ) : (
+          <>
           <p data-r className="mt-3 text-[16px] text-paper/80 md:text-[18px]">
             Оставьте свои контактные данные, и мы свяжемся с вами
           </p>
@@ -442,8 +475,11 @@ export function Contact() {
               </form>
             )}
           </div>
+          </>
+          )}
         </div>
 
+        {!DEMO && (
         <address data-r className="framed leaf card-green hidden p-8 not-italic lg:block">
           <p className="display text-[30px]">Офис продаж</p>
           <p className="mt-4 text-paper/85">{OFFICE.address}</p>
@@ -457,11 +493,18 @@ export function Contact() {
           </a>
           <a href={`mailto:${OFFICE.email}`} className="mt-1 block text-paper/80 hover:text-sage">{OFFICE.email}</a>
         </address>
+        )}
       </div>
       <footer data-r className="mt-6 flex flex-wrap items-center justify-between gap-x-6 gap-y-1 border-t-[1.5px] border-sage/30 pt-4 text-[13px] text-paper/60 md:absolute md:inset-x-10 md:bottom-6 md:mt-0 md:pr-36">
-        <a href={OFFICE.phoneHref} className="font-semibold text-paper lg:hidden">{OFFICE.phone}</a>
-        <span className="lg:hidden">{OFFICE.address}</span>
-        <span>© 2026 Жилой дом «Мичурин», Новосибирск</span>
+        {DEMO ? (
+          <span>Концепт 3D-презентации жилого дома «Мичурин». Не является официальным сайтом застройщика.</span>
+        ) : (
+          <>
+            <a href={OFFICE.phoneHref} className="font-semibold text-paper lg:hidden">{OFFICE.phone}</a>
+            <span className="lg:hidden">{OFFICE.address}</span>
+            <span>© 2026 Жилой дом «Мичурин», Новосибирск</span>
+          </>
+        )}
         <span className="hidden md:inline">Финансирование строительства — АО «Банк ДОМ.РФ»</span>
       </footer>
     </section>
