@@ -1,5 +1,5 @@
 import { forwardRef, useEffect, useState } from 'react'
-import { ROOMS, ANCHORS, FLAT, OFFICE } from '../config'
+import { ROOMS, ANCHORS, FLAT, OFFICE, PLAN_FLOOR } from '../config'
 
 /* ── brand atoms ─────────────────────────────────────────────── */
 
@@ -152,7 +152,7 @@ export function Hero({ onNav }) {
             <span data-r className="block">МИЧУРИН</span>
           </h1>
           <p data-r className="mt-3 text-[24px] font-semibold text-sage md:text-[34px]">
-            Скидка 10% на квартиры*
+            Скидка 10% на квартиры
           </p>
           <p data-r className="mt-4 max-w-[460px] text-[15px] leading-relaxed text-paper/80 md:text-[17px]">
             Дом класса «комфорт-плюс» в районе Золотой Нивы — в пяти минутах пешком от метро,
@@ -160,13 +160,12 @@ export function Hero({ onNav }) {
           </p>
           <div data-r className="pointer-events-auto mt-8 flex flex-wrap gap-3">
             <a href="#contact" className="pill pill-sage" onClick={navTo(onNav, ANCHORS.contact)}>
-              Подробные условия*
+              Узнать о скидке
             </a>
             <a href="#plans" className="pill pill-ghost text-paper" onClick={navTo(onNav, ANCHORS.plans)}>
               Смотреть квартиры <Arrow />
             </a>
           </div>
-          <p data-r className="mt-4 text-[12px] text-paper/45">* Условия акции уточняйте в офисе продаж.</p>
         </div>
       </section>
 
@@ -252,19 +251,19 @@ export const FloorMarker = forwardRef(function FloorMarker(_, ref) {
 
 const ZONES = [
   {
-    floors: 'Первые этажи',
+    floors: 'Этажи 1–2',
     title: 'Коммерческие помещения',
     text: 'Основание из тёмного кирпича с витринами в пол. Магазины и сервисы — в шаге от подъезда.',
   },
   {
-    floors: 'Средние этажи',
+    floors: 'Этажи 3–13',
     title: 'Светлый фасад и лоджии',
     text: 'Графитовые вертикали задают ритм светлой плоскости, лоджии остеклены от пола до потолка.',
   },
   {
-    floors: 'Верхние этажи',
+    floors: 'Этажи 14–18',
     title: 'Графитовый верх',
-    text: 'Тёмный объём венчает дом. Отсюда открываются виды на зелёные кварталы и весь город.',
+    text: 'Этажи с 14 по 18 собраны в тёмный объём. Отсюда открываются виды на зелёные кварталы и весь город.',
   },
 ]
 
@@ -336,7 +335,7 @@ export function PlanIntro() {
         <span data-r className="block">Планировки</span>
       </h2>
       <p data-r className="mt-3 max-w-[440px] text-[16px] leading-relaxed text-brand/75">
-        Вынимаем этаж из дома и заходим в однокомнатную квартиру {FLAT.total} м² — комната за комнатой.
+        Вынимаем {PLAN_FLOOR}-й этаж из дома и заходим в однокомнатную квартиру {FLAT.total} м² — комната за комнатой.
       </p>
     </section>
   )

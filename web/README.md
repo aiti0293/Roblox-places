@@ -13,7 +13,8 @@ npm run build    # static build in web/dist
 
 - `src/config.js` — palette, tower dimensions, scene state, room copy
 - `src/timeline.js` — the single master GSAP timeline (time unit = 1 vh of scroll)
-- `src/three/Tower.jsx` — procedural tower modelled on the real facade (instanced glazing)
+- `src/three/Tower.jsx` — detailed procedural model of the 18-storey tower (recessed balcony bay, loggia portals, clinker plinth, roof plant)
+- `src/three/textures.js` — canvas brick and facade-cassette textures
 - `src/three/FloorPlan.jsx` — clay floor plan of level 18 with the featured flat
 - `src/three/Surroundings.jsx` — low-rise context, trees, sports court, city ring
 - `src/three/Scene.jsx` — sky dome, lights, environment, damped camera rig, mouse parallax
@@ -24,8 +25,8 @@ npm run build    # static build in web/dist
 | vh | what happens |
 |---|---|
 | 0–100 | hero → camera dives to the foot of the facade |
-| 100–330 | camera rises along the tower, floor counter 01 → 25, three facade zones |
+| 100–330 | camera rises along the tower, floor counter 01 → 18, three facade zones |
 | 340–600 | full 360° orbit, pull back, "views" chapter |
-| 600–700 | tower is sliced down to floor 18, clay plan grows, sky → paper |
-| 700–1100 | zoom into flat 18.4, room-by-room tour |
+| 600–700 | tower is sliced down to floor 10, the plan grows, sky → paper |
+| 700–1100 | zoom into the 1К 39,10 m² flat, room-by-room tour |
 | 1100–1200 | pull out, the tower rebuilds itself at dusk, contact form |

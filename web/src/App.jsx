@@ -3,7 +3,7 @@ import { Canvas } from '@react-three/fiber'
 import Lenis from 'lenis'
 import Scene from './three/Scene'
 import { buildTimeline, attachScroll, gsap, ScrollTrigger } from './timeline'
-import { sceneState, FLOOR_H, FLOORS, SCROLL_VH } from './config'
+import { sceneState, floorAt, SCROLL_VH } from './config'
 import { Header, Hero, CatalogButton, FloorMarker, Zones, Views, PlanIntro, Tour, Contact } from './ui/Overlays'
 
 function detect() {
@@ -64,7 +64,7 @@ export default function App() {
     let lastFloor = -1
     let lastRoom = -2
     const tick = () => {
-      const floor = Math.min(FLOORS, Math.max(1, Math.round((sceneState.camY - 1) / FLOOR_H) + 1))
+      const floor = floorAt(sceneState.camY)
       if (floor !== lastFloor && floorRef.current) {
         floorRef.current.textContent = String(floor).padStart(2, '0')
         lastFloor = floor

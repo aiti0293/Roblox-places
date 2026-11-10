@@ -1,17 +1,29 @@
 // Shared constants for the scene and the scroll choreography.
 
-export const FLOORS = 25
-export const FLOOR_H = 3.1
-export const TOWER_W = 26 // x
-export const TOWER_D = 17 // z
-export const TOWER_H = FLOORS * FLOOR_H
+export const FLOORS = 18
+export const GROUND_H = 4.5 // double-height commercial ground floor
+export const FLOOR_H = 3.0
+export const TOWER_W = 26 // x, front facade (with the recessed balcony bay)
+export const TOWER_D = 18 // z
+export const TOWER_H = GROUND_H + (FLOORS - 1) * FLOOR_H // 55.5 m to the top slab
+export const PARAPET = 1.2
 
-// Floor zones, read off the real facade: dark brick plinth, light middle, graphite crown.
-export const ZONE_BASE_END = 2 // floors [0, 2)
-export const ZONE_TOP_START = 19 // floors [19, 25)
+// Recessed balcony bay in the middle of the front facade
+export const BAY = { x0: -2, x1: 2, depth: 1.6 }
 
-export const PLAN_FLOOR = 18 // the floor that gets "extracted" into the clay plan (1-based label)
-export const PLAN_Y = (PLAN_FLOOR - 1) * FLOOR_H
+/** Base y of floor index i (0-based). */
+export const floorY = (i) => (i === 0 ? 0 : GROUND_H + (i - 1) * FLOOR_H)
+/** Height of floor index i. */
+export const floorH = (i) => (i === 0 ? GROUND_H : FLOOR_H)
+/** 1-based floor label for a height. */
+export const floorAt = (y) => (y < GROUND_H ? 1 : Math.min(FLOORS, Math.floor((y - GROUND_H) / FLOOR_H) + 2))
+
+// Floor zones, read off the real facade: brick plinth, light middle, graphite crown.
+export const ZONE_BASE_END = 2 // floors 1–2
+export const ZONE_TOP_START = 13 // floors 14–18
+
+export const PLAN_FLOOR = 10 // the floor that gets "extracted" into the plan (1-based)
+export const PLAN_Y = floorY(PLAN_FLOOR - 1)
 
 // Total scroll length in viewport heights. The master timeline uses the same unit,
 // so timeline time === scrollY / innerHeight.
@@ -54,10 +66,10 @@ export const PALETTE = {
 // Camera is described in cylindrical coordinates around a target point.
 export const sceneState = {
   az: 0.42, // camera azimuth around target, radians
-  r: 165, // horizontal distance from target
-  camY: 26,
-  tgtX: -22,
-  tgtY: 41,
+  r: 150, // horizontal distance from target
+  camY: 16,
+  tgtX: -20,
+  tgtY: 31,
   tgtZ: 0,
   clipLow: -10, // tower clipping: keep y >= clipLow
   clipHigh: 200, // keep y <= clipHigh
@@ -101,7 +113,7 @@ export const ROOMS = [
     area: '4,11',
     title: 'Лоджия',
     text: 'Остеклённая лоджия при кухне — утренний кофе с видом на зелёный двор.',
-    center: [7.05, 9.25],
+    center: [7.05, 9.75],
   },
 ]
 

@@ -1,10 +1,10 @@
 import { useLayoutEffect, useMemo, useRef } from 'react'
 import { useFrame } from '@react-three/fiber'
 import * as THREE from 'three'
-import { PALETTE, PLAN_Y, ROOMS, TOWER_W, TOWER_D, sceneState } from '../config'
+import { PALETTE, PLAN_Y, ROOMS, TOWER_W, TOWER_D, BAY, sceneState } from '../config'
 
-const HW = TOWER_W / 2
-const HD = TOWER_D / 2
+const HW = TOWER_W / 2 - 0.2 // inset so the plan never pokes through the facade
+const HD = TOWER_D / 2 - 0.2
 const WALL_H = 2.8
 const SILL_H = 0.9
 
@@ -14,10 +14,15 @@ const seg = (x1, z1, x2, z2, t = 0.14, h = WALL_H) => [x1, z1, x2, z2, t, h]
 function buildWalls() {
   const walls = []
   // exterior: sill-height parapet all round + full-height piers between windows
-  walls.push(seg(-HW, HD, HW, HD, 0.3, SILL_H), seg(-HW, -HD, HW, -HD, 0.3, SILL_H))
+  // front edge follows the tower's recessed balcony bay
+  const zr = HD - BAY.depth - 0.2
+  walls.push(seg(-HW, HD, BAY.x0, HD, 0.3, SILL_H), seg(BAY.x1, HD, HW, HD, 0.3, SILL_H))
+  walls.push(seg(BAY.x0 - 0.2, HD, BAY.x0 - 0.2, zr, 0.3), seg(BAY.x1 + 0.2, HD, BAY.x1 + 0.2, zr, 0.3), seg(BAY.x0, zr, BAY.x1, zr, 0.3, SILL_H))
+  walls.push(seg(-HW, -HD, HW, -HD, 0.3, SILL_H))
   walls.push(seg(-HW, -HD, -HW, HD, 0.3, SILL_H), seg(HW, -HD, HW, HD, 0.3, SILL_H))
   for (let x = -HW; x <= HW + 0.01; x += 3.25) {
-    walls.push(seg(x - 0.35, HD, x + 0.35, HD, 0.3), seg(x - 0.35, -HD, x + 0.35, -HD, 0.3))
+    if (x < BAY.x0 - 0.4 || x > BAY.x1 + 0.4) walls.push(seg(x - 0.35, HD, x + 0.35, HD, 0.3))
+    walls.push(seg(x - 0.35, -HD, x + 0.35, -HD, 0.3))
   }
   for (let z = -HD; z <= HD + 0.01; z += 2.83) {
     walls.push(seg(-HW, z - 0.35, -HW, z + 0.35, 0.3), seg(HW, z - 0.35, HW, z + 0.35, 0.3))
@@ -58,7 +63,7 @@ const FURNITURE = [
   // hall
   [2.7, 3.0, 1.3, 1.9, 2.2], [4.5, 2.3, 1.0, 0.4, 0.5],
   // loggia
-  [6.4, 9.3, 0.6, 0.6, 0.75], [7.4, 9.3, 0.5, 0.5, 0.5],
+  [6.4, 9.8, 0.6, 0.6, 0.75], [7.4, 9.8, 0.5, 0.5, 0.5],
   // neighbours
   [11.5, 6.8, 2.0, 1.8, 0.5], [9.6, 7.6, 1.8, 0.8, 0.75], [12.2, 3.0, 0.6, 2.0, 0.9],
   [-7.0, 7.4, 2.6, 0.9, 0.75], [-2.0, 6.8, 1.8, 2.0, 0.5], [-11.2, 7.3, 2.0, 1.8, 0.5], [-1.5, 2.6, 2.0, 0.6, 0.9],
@@ -71,10 +76,10 @@ const CORE = [[0, 0, 5.6, 3.4, WALL_H]]
 
 // Room floors of the featured flat: [x1, z1, x2, z2] in ROOMS order
 const ROOM_FLOORS = [
-  [5.57, 3.57, 8.39, 8.5],
-  [2.07, 4.07, 5.43, 8.5],
+  [5.57, 3.57, 8.39, 8.85],
+  [2.07, 4.07, 5.43, 8.85],
   [5.57, 2.07, 8.39, 3.43],
-  [5.6, 8.65, 8.5, 9.85],
+  [5.6, 9.15, 8.5, 10.35],
 ]
 
 function useBoxes(ref, boxes) {
@@ -141,7 +146,7 @@ export default function FloorPlan({ shadows = true }) {
         <meshStandardMaterial color="#E6E9E2" roughness={0.95} fog={false} />
       </mesh>
       {/* loggia slab */}
-      <mesh position={[7.05, -0.15, 9.25]} receiveShadow>
+      <mesh position={[7.05, -0.15, 9.75]} receiveShadow>
         <boxGeometry args={[3.1, 0.3, 1.5]} />
         <meshStandardMaterial color="#E6E9E2" roughness={0.95} fog={false} />
       </mesh>
@@ -155,7 +160,7 @@ export default function FloorPlan({ shadows = true }) {
         <instancedMesh ref={wallsRef} args={[box, wallMat, wallBoxes.length]} castShadow={shadows} receiveShadow />
         <instancedMesh ref={furnRef} args={[box, clay, furnBoxes.length]} castShadow={shadows} receiveShadow />
         {/* loggia glass railing */}
-        <mesh position={[7.05, 0.55, 9.95]}>
+        <mesh position={[7.05, 0.55, 10.45]}>
           <boxGeometry args={[3.1, 1.1, 0.05]} />
           <meshStandardMaterial color="#BFD3DD" transparent opacity={0.45} roughness={0.1} fog={false} />
         </mesh>

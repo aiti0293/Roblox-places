@@ -144,7 +144,7 @@ function Lights({ shadows }) {
         shadow-mapSize={[2048, 2048]}
         shadow-camera-left={-70}
         shadow-camera-right={70}
-        shadow-camera-top={90}
+        shadow-camera-top={75}
         shadow-camera-bottom={-40}
         shadow-camera-near={10}
         shadow-camera-far={300}
@@ -181,7 +181,7 @@ export default function Scene({ lite = false, reducedMotion = false }) {
         <Lightformer form="rect" intensity={1.2} color="#FFFFFF" position={[12, 2, 4]} rotation-y={-Math.PI / 2} scale={[10, 2, 1]} />
         <Lightformer form="rect" intensity={0.6} color="#C9D3DA" position={[0, -6, 0]} rotation-x={-Math.PI / 2} scale={[40, 40, 1]} />
       </Environment>
-      <Tower clippingPlanes={clippingPlanes} />
+      <Tower clippingPlanes={clippingPlanes} lite={lite} />
       <Surroundings lite={lite} />
       <FloorPlan shadows={!lite} />
       <CameraRig reducedMotion={reducedMotion} />

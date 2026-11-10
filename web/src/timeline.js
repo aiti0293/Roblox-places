@@ -26,12 +26,12 @@ export function buildTimeline({ reducedMotion }) {
   // ── 0–100 · Hero → foot of the facade ─────────────────────────────
   textOut('[data-ov="hero"] [data-r]', 4, 34)
   textOut('[data-ov="hero-card"], [data-ov="hero-stats"]', 0, 26)
-  tl.to(S, { az: 0.62, r: 30, camY: 5, tgtX: 0, tgtY: 9, duration: 100, ease: 'glide' }, 0)
+  tl.to(S, { az: 0.5, r: 28, camY: 3.5, tgtX: 0, tgtY: 7, duration: 100, ease: 'glide' }, 0)
 
-  // ── 100–330 · Rise along the tower, floor counter runs 01 → 25 ────
+  // ── 100–330 · Rise along the tower, floor counter runs 01 → 18 ────
   textIn('[data-ov="floor"]', 92, 20)
-  tl.to(S, { camY: 10, tgtY: 12, duration: 70, ease: 'sine.inOut' }, 100)
-  tl.to(S, { camY: 81, tgtY: 80, duration: 160, ease: 'sine.inOut' }, 170)
+  tl.to(S, { camY: 7, tgtY: 8.5, duration: 70, ease: 'sine.inOut' }, 100)
+  tl.to(S, { camY: TOWER_H + 1.5, tgtY: TOWER_H + 1, duration: 160, ease: 'sine.inOut' }, 170)
   textIn('[data-ov="zone-0"] [data-r]', 108)
   textOut('[data-ov="zone-0"] [data-r]', 158)
   textIn('[data-ov="zone-1"] [data-r]', 182)
@@ -42,15 +42,15 @@ export function buildTimeline({ reducedMotion }) {
 
   // ── 340–600 · Full orbit, pull back to show the whole house ──────
   tl.to(S, { az: AZ0, duration: 250, ease: 'power2.inOut' }, 345)
-  tl.to(S, { r: 150, camY: 34, tgtY: 40, tgtX: 0, duration: 130, ease: 'glide' }, 340)
+  tl.to(S, { r: 140, camY: 22, tgtY: 30, tgtX: 0, duration: 130, ease: 'glide' }, 340)
   textIn('[data-ov="views"] [data-r]', 395, 26)
   textOut('[data-ov="views"] [data-r]', 545, 20)
-  tl.to(S, { r: 62, camY: PLAN_Y + 26, tgtY: PLAN_Y, duration: 110, ease: 'power2.inOut' }, 490)
+  tl.to(S, { r: 58, camY: PLAN_Y + 26, tgtY: PLAN_Y, duration: 110, ease: 'power2.inOut' }, 490)
 
-  // ── 600–700 · Slice the tower down to floor 18, clay plan grows ───
+  // ── 600–700 · Slice the tower down to the plan floor, plan grows ──
   tl.set(S, { planVis: 1 }, 598)
   tl.to(S, { clipHigh: PLAN_Y + 0.02, duration: 70, ease: 'power3.inOut' }, 600)
-  tl.fromTo(S, { planGrow: 0 }, { planGrow: 1, duration: 60, ease: 'power2.out' }, 628)
+  tl.fromTo(S, { planGrow: 0 }, { planGrow: 1, duration: 55, ease: 'power2.out' }, 645)
   tl.to(S, { bgPaper: 1, duration: 55, ease: 'power1.inOut' }, 630)
   tl.to(S, { clipLow: PLAN_Y - 0.32, duration: 40, ease: 'power2.in' }, 650)
   tl.set(S, { towerVis: 0 }, 692)
@@ -78,7 +78,7 @@ export function buildTimeline({ reducedMotion }) {
 
   // ── 1100–1200 · Pull out, the house rebuilds itself at dusk ───────
   tl.to(S, { room: -1, duration: 20 }, 1095)
-  tl.to(S, { az: AZ0 - 0.18, r: 175, camY: 24, tgtX: -34, tgtY: 40, tgtZ: 0, duration: 95, ease: 'glide' }, 1100)
+  tl.to(S, { az: AZ0 - 0.18, r: 150, camY: 14, tgtX: -28, tgtY: 31, tgtZ: 0, duration: 95, ease: 'glide' }, 1100)
   tl.to(S, { bgPaper: 0, bgGreen: 1, duration: 50, ease: 'power1.inOut' }, 1104)
   tl.set(S, { towerVis: 1, clipLow: -10 }, 1118)
   tl.fromTo(S, { clipHigh: PLAN_Y + 0.02 }, { clipHigh: TOWER_H + 8, duration: 50, ease: 'power2.inOut', immediateRender: false }, 1120)
