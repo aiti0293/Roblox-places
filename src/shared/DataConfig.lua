@@ -73,6 +73,7 @@ DataConfig.GameConfig = table.freeze({
 	BasePlotsFolder = "BasePlots", -- workspace.BasePlots: 6 точек-участков (Plot1..Plot6)
 
 	-- Красная кнопка / лазеры
+	-- Лазеры есть ТОЛЬКО в дверных проёмах баз (Plot.Doorway.Lasers)
 	RedButtonHoldTime = 5, -- Сколько держать кнопку для активации лазеров (сек)
 	LaserDuration = 60, -- Сколько лазеры остаются включёнными (сек)
 	LaserCooldown = 30, -- Перезарядка после выключения (сек)
@@ -196,10 +197,9 @@ DataConfig.Remotes = table.freeze({
 	"BatSwing", -- Взмах битой
 
 	-- Сервер → Клиент
-	"CashChanged",
 	"Alarm", -- Жертве: у тебя крадут!
 	"Wanted", -- Вору: экран WANTED
-	"LaserState", -- Состояние лазеров базы
+	"LaserState", -- Состояние лазеров в дверях базы
 	"BossState", -- Смена состояния босса (для музыки/UI)
 	"Notify", -- Общие всплывающие сообщения
 })

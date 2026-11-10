@@ -54,7 +54,10 @@ return MyService
 ### Ключевое правило: «брейнрот в руках»
 Единственный источник правды — `BaseService.HeldBrainrot[player]`:
 `{ Id, FromOwner: Player, FromSlot: string }`.
-- В руках → доход не идёт (слот помечен пустым, но «зарезервирован» за владельцем).
+- В руках → доход не идёт (слот визуально пуст, но «зарезервирован» за владельцем).
+- В профиле (SaveService) слот НЕ очищается, пока брейнрот в руках/в пушке.
+  Профиль меняется только при реальной краже (вор поставил брейнрота к себе).
+  Поэтому выход игрока или падение сервера не теряют брейнротов.
 - `BaseService:DropHeld(player)` — **единая точка** для всех случаев потери:
   удар битой, поймал босс, смерть от лазера, выход из игры.
   Брейнрот мгновенно возвращается на базу владельца (`FromOwner`).
@@ -65,9 +68,12 @@ return MyService
 [База] RequestPickup ──► BaseService.HeldBrainrot
         │
 [Пушка] RequestCannon ──► CannonService: захват свободной пушки,
+        │                 брейнрот из рук вставляется в пушку,
         │                 скин по редкости (DataConfig.Rarities[r].CannonSkin)
-        │                 брейнрот «поглощается» пушкой → возвращается на базу
-[Hit]   RequestFire ──► CannonService: игрок = снаряд (LinearVelocity / AssemblyLinearVelocity)
+[Hit]   RequestFire ──► CannonService: игрок = снаряд (AssemblyLinearVelocity)
+        │                 В МОМЕНТ ВЫСТРЕЛА: брейнрот мгновенно исчезает из пушки
+        │                 и возвращается в слот на базе игрока (он его сохраняет),
+        │                 пушка сразу становится нейтральной и свободна для любого
         │
 [Стена] Touched ──► WallService:Damage(player, LaunchPower)
         │            кирпичи с HP ≤ 0 → Unanchored обломки → Debris
@@ -79,17 +85,22 @@ return MyService
         └─ игрок в Safe Zone → Return → Sleep
 ```
 
+## Лазеры
+
+Лазеры существуют **только в дверных проёмах баз** (`Plot.Doorway.Lasers`) — это защита от воров.
+В Shooting Zone, у стен и в Boss Zone лазеров нет.
+
 ## Безопасность (анти-чит)
 
 - Клиент только **просит** (Request*). Все проверки — на сервере: дистанция, кулдауны, владение.
 - Удар битой: сервер проверяет `BatCooldown` и `BatRange` сам, клиентский хит-лист игнорируется.
 - Деньги и слоты меняются только через SaveService — один путь записи в профиль.
 - Состояние для UI отдаётся через `Attributes` (`player:SetAttribute("Cash", …)`)
-  и RemoteEvent'ы из `DataConfig.Remotes`.
+  и RemoteEvent'ы из `DataConfig.Remotes`. Деньги — только атрибут `Cash`.
 
 ## Что нужно в Workspace / ServerStorage
 
-- `workspace.BasePlots/Plot1..Plot6` — точки баз (у каждой: `RedButton`, `Slots/1..10`, `Lasers`, `SafeZone`).
+- `workspace.BasePlots/Plot1..Plot6` — точки баз (у каждой: `RedButton`, `Slots/1..10`, `Doorway/Lasers`, `SafeZone`).
 - `workspace.Cannons/Cannon1..Cannon3` — нейтральные пушки (`Seat`/`Barrel`, `HitPrompt`).
 - `workspace.WallLanes/Lane1..Lane6` — точки, где строится личная стена игрока.
 - `workspace.BossZone/<BossId>` — точки сна боссов.
