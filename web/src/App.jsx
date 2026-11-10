@@ -4,7 +4,7 @@ import Lenis from 'lenis'
 import Scene from './three/Scene'
 import { buildTimeline, attachScroll, gsap, ScrollTrigger } from './timeline'
 import { sceneState, FLOOR_H, FLOORS, SCROLL_VH } from './config'
-import { Header, Hero, FloorMarker, Zones, Views, PlanIntro, Tour, Contact } from './ui/Overlays'
+import { Header, Hero, CatalogButton, FloorMarker, Zones, Views, PlanIntro, Tour, Contact } from './ui/Overlays'
 
 function detect() {
   const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches
@@ -52,7 +52,7 @@ export default function App() {
         gsap.from('[data-ov="hero"] [data-r]', {
           yPercent: 60, autoAlpha: 0, duration: 1.4, ease: 'expo.out', stagger: 0.08, delay: 0.35,
         })
-        gsap.from('[data-ov="hero-card"], [data-ov="hero-stats"], [data-ov="hint"]', {
+        gsap.from('[data-ov="hero-card"], [data-ov="hero-stats"]', {
           autoAlpha: 0, duration: 1.2, ease: 'power2.out', delay: 0.9,
         })
       } else {
@@ -73,7 +73,7 @@ export default function App() {
       if (room !== lastRoom && dotsRef.current) {
         ;[...dotsRef.current.children].forEach((d, i) => {
           d.style.width = i === room ? '22px' : '6px'
-          d.style.backgroundColor = i === room ? '#203A32' : ''
+          d.style.backgroundColor = i === room ? '#26372D' : ''
         })
         lastRoom = room
       }
@@ -93,7 +93,7 @@ export default function App() {
 
   return (
     <>
-      <a href="#contact" className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-50 focus:rounded-full focus:bg-paper focus:px-4 focus:py-2 focus:text-ink">
+      <a href="#contact" className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-50 focus:rounded-full focus:bg-sage focus:px-4 focus:py-2 focus:text-ink">
         Перейти к записи на просмотр
       </a>
 
@@ -113,7 +113,7 @@ export default function App() {
             </Suspense>
           </Canvas>
         ) : (
-          <div className="h-full w-full bg-[linear-gradient(180deg,#4F86C6,#CFDDE7)]" />
+          <div className="h-full w-full bg-[linear-gradient(180deg,#26372D,#1B2820)]" />
         )}
       </div>
 
@@ -126,6 +126,7 @@ export default function App() {
         <PlanIntro />
         <Tour ref={dotsRef} />
         <Contact />
+        <CatalogButton onNav={onNav} />
         {/* scroll track: its height defines the length of the whole choreography */}
         <div ref={track} style={{ height: `${SCROLL_VH}vh` }} aria-hidden="true" />
       </main>

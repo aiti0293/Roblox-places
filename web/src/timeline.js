@@ -25,7 +25,7 @@ export function buildTimeline({ reducedMotion }) {
 
   // ── 0–100 · Hero → foot of the facade ─────────────────────────────
   textOut('[data-ov="hero"] [data-r]', 4, 34)
-  textOut('[data-ov="hero-card"], [data-ov="hero-stats"], [data-ov="hint"]', 0, 26)
+  textOut('[data-ov="hero-card"], [data-ov="hero-stats"]', 0, 26)
   tl.to(S, { az: 0.62, r: 30, camY: 5, tgtX: 0, tgtY: 9, duration: 100, ease: 'glide' }, 0)
 
   // ── 100–330 · Rise along the tower, floor counter runs 01 → 25 ────
@@ -55,12 +55,12 @@ export function buildTimeline({ reducedMotion }) {
   tl.to(S, { clipLow: PLAN_Y - 0.32, duration: 40, ease: 'power2.in' }, 650)
   tl.set(S, { towerVis: 0 }, 692)
   tl.to(S, { az: AZ0 + 0.55, r: 30, camY: PLAN_Y + 27, tgtY: PLAN_Y, duration: 100, ease: 'glide' }, 600)
-  tl.to('[data-ov="header"]', { '--fg': '#101513', '--fg-soft': 'rgba(16,21,19,.55)', '--line': 'rgba(16,21,19,.16)', duration: 30 }, 640)
+  tl.to('[data-ov="header"]', { '--fg': '#26372D', '--fg-soft': 'rgba(38,55,45,.6)', '--line': 'rgba(38,55,45,.18)', duration: 30 }, 640)
   textIn('[data-ov="plan"] [data-r]', 676)
   textOut('[data-ov="plan"] [data-r]', 760)
 
   // ── 700–800 · Rotate the floor, zoom into the featured flat ──────
-  tl.to(S, { az: AZ0 + 0.95, r: 17, camY: PLAN_Y + 19, tgtX: 7.4, tgtZ: 5.6, duration: 85, ease: 'power2.inOut' }, 700)
+  tl.to(S, { az: AZ0 + 0.95, r: 16, camY: PLAN_Y + 27, tgtX: 5.3, tgtZ: 5.8, duration: 85, ease: 'power2.inOut' }, 700)
 
   // ── 800–1100 · Room-by-room tour ─────────────────────────────────
   textIn('[data-ov="tour"]', 786, 18)
@@ -68,7 +68,7 @@ export function buildTimeline({ reducedMotion }) {
     const at = 800 + i * 75
     const [x, z] = room.center
     tl.to(S, {
-      tgtX: x, tgtZ: z, r: 10.5, camY: PLAN_Y + 12.5, az: AZ0 + 0.95 + (i % 2 ? -0.35 : 0.25), room: i,
+      tgtX: x, tgtZ: z, r: 10, camY: PLAN_Y + 20, az: AZ0 + 0.95 + (i % 2 ? -0.35 : 0.25), room: i,
       duration: 48, ease: 'power2.inOut',
     }, at - (i === 0 ? 8 : 22))
     textIn(`[data-room="${i}"] [data-r]`, at - 4, 18)
@@ -85,7 +85,7 @@ export function buildTimeline({ reducedMotion }) {
   tl.to(S, { planGrow: 0, duration: 30, ease: 'power2.in' }, 1112)
   tl.set(S, { planVis: 0 }, 1145)
   tl.to(S, { night: 1, duration: 60 }, 1120)
-  tl.to('[data-ov="header"]', { '--fg': '#F3F1EC', '--fg-soft': 'rgba(243,241,236,.6)', '--line': 'rgba(243,241,236,.2)', duration: 30 }, 1110)
+  tl.to('[data-ov="header"]', { '--fg': '#F3F3F1', '--fg-soft': 'rgba(243,243,241,.65)', '--line': 'rgba(203,223,162,.35)', duration: 30 }, 1110)
   textIn('[data-ov="contact"] [data-r]', 1150, 30)
 
   tl.set({}, {}, TIMELINE_END)

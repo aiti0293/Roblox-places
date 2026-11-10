@@ -27,24 +27,27 @@ export const ANCHORS = {
   contact: TIMELINE_END,
 }
 
+// Brand palette sampled from дом-мичурин.рф screenshots.
 export const PALETTE = {
   skyTop: '#4F86C6',
   skyLow: '#CFDDE7',
-  paper: '#F3F1EC',
-  greenTop: '#12241E',
-  greenLow: '#203A32',
+  paper: '#F3F3F1',
+  greenTop: '#1B2820',
+  greenLow: '#26372D',
   facadeTop: '#6E737A',
   facadeMid: '#E3E5E7',
   facadeBase: '#4B4240',
   stripe: '#7C8188',
   frame: '#2B2E33',
-  glass: '#5A6E80',
-  clay: '#ECE9E4',
-  clayFloor: '#E6E2DB',
-  focus: '#D6BE9C',
-  brand: '#203A32',
-  terracotta: '#C2704F',
-  plant: '#4E6B57',
+  glass: '#4A5560',
+  clay: '#F4F5F1',
+  clayFloor: '#E2EDDE',
+  focus: '#CBDFA2',
+  brand: '#26372D',
+  sage: '#CBDFA2',
+  taupe: '#9F7E64',
+  terracotta: '#9F7E64',
+  plant: '#425A4C',
 }
 
 // The mutable scene state the master GSAP timeline writes to and the R3F loop reads from.
@@ -68,33 +71,44 @@ export const sceneState = {
   intro: 1, // load-in offset, tweened to 0 once
 }
 
+// Real 1-room flat (1К, 39,10 м²) from the developer's catalogue.
+export const FLAT = { type: '1К', total: '39,10', living: '14,50', area: '37,04' }
+
 export const ROOMS = [
   {
-    id: 'living',
-    kicker: 'Комната 01 · 32 м²',
+    id: 'kitchen',
+    area: '13,89',
     title: 'Кухня-гостиная',
-    text: 'Светлое пространство на две стороны: кухонный остров, обеденная зона на шестерых и выход на лоджию.',
-    center: [5.25, 6.05],
+    text: 'Кухня вдоль стены, обеденный стол у окна и выход на лоджию — центр жизни квартиры.',
+    center: [7.0, 6.0],
   },
   {
-    id: 'bedroom',
-    kicker: 'Комната 02 · 19 м²',
-    title: 'Спальня с гардеробной',
-    text: 'Тихая сторона квартиры. Встроенная система хранения вдоль стены и окно в пол с видом на кроны деревьев.',
-    center: [10.75, 6.35],
+    id: 'room',
+    area: '14,50',
+    title: 'Спальня',
+    text: 'Отдельная комната с окном в пол: место под двуспальную кровать, шкаф и рабочий стол.',
+    center: [3.75, 6.25],
   },
   {
     id: 'bath',
-    kicker: 'Комната 03 · 10 м²',
-    title: 'Ванная комната',
-    text: 'Отдельностоящая ванна, двойная раковина и место под стиральную машину — без компромиссов по площади.',
-    center: [10.75, 3.1],
+    area: '4,31',
+    title: 'Санузел',
+    text: 'Совмещённый санузел с ванной и местом под стиральную машину.',
+    center: [7.0, 2.75],
   },
   {
     id: 'loggia',
-    kicker: 'Комната 04 · 6 м²',
-    title: 'Видовая лоджия',
-    text: 'Панорамное остекление от пола до потолка. С 18 этажа — весь город до горизонта.',
-    center: [5.5, 9.1],
+    area: '4,11',
+    title: 'Лоджия',
+    text: 'Остеклённая лоджия при кухне — утренний кофе с видом на зелёный двор.',
+    center: [7.05, 9.25],
   },
 ]
+
+export const OFFICE = {
+  address: 'ул. Стофато, 26 стр',
+  hours: ['Пн–Пт с 9:00 до 19:00', 'Сб–Вс выходной'],
+  phone: '+7 (383) 228-37-62',
+  phoneHref: 'tel:+73832283762',
+  email: 'op@nova-1.ru',
+}

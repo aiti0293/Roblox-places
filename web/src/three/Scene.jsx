@@ -174,7 +174,7 @@ export default function Scene({ lite = false, reducedMotion = false }) {
         {/* bright sky reflected in the glazing, with a few soft "clouds" */}
         <mesh scale={100}>
           <sphereGeometry args={[1, 32, 16]} />
-          <meshBasicMaterial color="#7FA9D8" side={THREE.BackSide} />
+          <meshBasicMaterial color="#A9B9C8" side={THREE.BackSide} />
         </mesh>
         <Lightformer form="rect" intensity={2.2} color="#FFFFFF" position={[0, 6, -12]} scale={[18, 4, 1]} />
         <Lightformer form="rect" intensity={1.4} color="#F4F7FB" position={[-12, 3, 6]} rotation-y={Math.PI / 2} scale={[14, 3, 1]} />

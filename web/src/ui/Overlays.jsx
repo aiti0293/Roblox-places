@@ -1,190 +1,250 @@
-import { forwardRef, useState } from 'react'
-import { ROOMS, ANCHORS } from '../config'
+import { forwardRef, useEffect, useState } from 'react'
+import { ROOMS, ANCHORS, FLAT, OFFICE } from '../config'
 
-const Logo = ({ className = '' }) => (
-  <span className={`flex items-center gap-3 ${className}`}>
-    <span className="grid h-9 w-9 place-items-center rounded-full bg-brand font-serif text-[22px] leading-none text-paper ring-1 ring-white/15">
-      M
+/* ── brand atoms ─────────────────────────────────────────────── */
+
+const LeafDash = ({ flip = false }) => (
+  <svg width="22" height="6" viewBox="0 0 22 6" aria-hidden="true" className={flip ? '-scale-x-100' : ''}>
+    <path d="M1 3c6-3.5 14-3.5 20 0-6 3.5-14 3.5-20 0z" fill="#CBDFA2" />
+  </svg>
+)
+
+export const Wordmark = ({ className = '' }) => (
+  <span className={`inline-flex flex-col items-center leading-none ${className}`}>
+    <span className="font-display text-[21px] tracking-[0.02em] sm:text-[26px] md:text-[30px]">МИЧУРИН</span>
+    <span className="mt-1 flex items-center gap-1.5 text-[10px] lowercase sm:text-[11px] tracking-[0.12em] opacity-90">
+      <LeafDash /> жилой дом <LeafDash flip />
     </span>
-    <span className="font-display text-[13px] font-normal uppercase tracking-[0.22em]">Мичурин</span>
   </span>
 )
 
 const Arrow = () => (
   <svg className="arrow" width="14" height="10" viewBox="0 0 14 10" fill="none" aria-hidden="true">
-    <path d="M1 5h12M9 1l4 4-4 4" stroke="currentColor" strokeWidth="1.3" />
+    <path d="M1 5h12M9 1l4 4-4 4" stroke="currentColor" strokeWidth="1.5" />
   </svg>
 )
 
+const BuildingIcon = () => (
+  <svg width="30" height="30" viewBox="0 0 32 32" fill="none" stroke="currentColor" strokeWidth="1.4" aria-hidden="true">
+    <rect x="7" y="3" width="18" height="22" />
+    {[7, 12, 17].map((y) => [11, 16, 21].map((x) => <rect key={`${x}${y}`} x={x - 1.6} y={y - 1.6} width="3.2" height="3.2" />))}
+    <path d="M3 25h26v4H3zM6 25v4M10 25v4M14 25v4M18 25v4M22 25v4M26 25v4" />
+  </svg>
+)
+
+const navTo = (onNav, vh) => (e) => {
+  e.preventDefault()
+  onNav(vh)
+}
+
+/* ── header + leaf menu ─────────────────────────────────────── */
+
 export function Header({ onNav }) {
-  const link = (id, label) => (
-    <a
-      href={`#${id}`}
-      onClick={(e) => {
-        e.preventDefault()
-        onNav(ANCHORS[id])
-      }}
-      className="nav-link caps"
-      style={{ color: 'var(--fg-soft)' }}
-    >
-      {label}
-    </a>
-  )
+  const [open, setOpen] = useState(false)
+  useEffect(() => {
+    if (!open) return undefined
+    const onKey = (e) => e.key === 'Escape' && setOpen(false)
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [open])
+
+  const go = (vh) => (e) => {
+    setOpen(false)
+    navTo(onNav, vh)(e)
+  }
+  const links = [
+    ['facade', 'О доме'],
+    ['views', 'Расположение'],
+    ['plans', 'Квартиры'],
+    ['contact', 'Контакты'],
+  ]
+
   return (
-    <header data-ov="header" className="fixed inset-x-0 top-0 z-30">
-      <div className="flex items-center justify-between px-4 py-4 md:px-10 md:py-6">
-        <a
-          href="#top"
-          aria-label="Мичурин — в начало"
-          onClick={(e) => {
-            e.preventDefault()
-            onNav(0)
-          }}
-        >
-          <Logo />
-        </a>
-        <nav aria-label="Основная навигация" className="hidden items-center gap-9 lg:flex">
-          {link('facade', 'Дом')}
-          {link('views', 'Виды')}
-          {link('plans', 'Планировки')}
-          {link('contact', 'Контакты')}
+    <>
+      <header data-ov="header" className="fixed inset-x-0 top-0 z-30">
+        <div className="flex items-center justify-between gap-3 px-4 py-3 md:px-10 md:py-5">
+          <a href="#top" aria-label="Мичурин — в начало" onClick={go(0)}>
+            <Wordmark />
+          </a>
+          <nav aria-label="Основная навигация" className="hidden items-center gap-9 xl:flex">
+            {links.map(([id, label]) => (
+              <a key={id} href={`#${id}`} onClick={go(ANCHORS[id])} className="nav-link text-[15px] font-semibold" style={{ color: 'var(--fg-soft)' }}>
+                {label}
+              </a>
+            ))}
+          </nav>
+          <div className="flex items-center gap-3">
+            <a href="#contact" onClick={go(ANCHORS.contact)} className="pill pill-taupe h-11 px-4 text-[12px] md:h-12 md:px-6 md:text-[13px]">
+              Заказать звонок
+            </a>
+            <button
+              type="button"
+              aria-expanded={open}
+              aria-controls="site-menu"
+              aria-label={open ? 'Закрыть меню' : 'Открыть меню'}
+              onClick={() => setOpen((v) => !v)}
+              className="leaf-sm grid h-11 w-12 shrink-0 place-items-center border-[1.5px] border-brand bg-sage text-brand transition-transform duration-500 [transition-timing-function:cubic-bezier(.34,1.56,.64,1)] hover:-rotate-6 md:h-12 md:w-14"
+            >
+              <span className="relative block h-3 w-6">
+                <span className={`absolute left-0 h-[2.5px] w-6 rounded bg-brand transition-all duration-500 ${open ? 'top-1 rotate-45' : 'top-0'}`} />
+                <span className={`absolute left-0 h-[2.5px] w-6 rounded bg-brand transition-all duration-500 ${open ? 'top-1 -rotate-45' : 'top-[9px]'}`} />
+              </span>
+            </button>
+          </div>
+        </div>
+        <div className="mx-4 h-[1.5px] md:mx-10" style={{ background: 'var(--line)' }} />
+      </header>
+
+      <div
+        id="site-menu"
+        role="dialog"
+        aria-modal="true"
+        aria-label="Меню"
+        className={`fixed inset-0 z-20 flex flex-col justify-center bg-brand px-6 pt-24 text-paper transition-[opacity,visibility] duration-500 md:px-16 ${open ? 'visible opacity-100' : 'invisible opacity-0'}`}
+      >
+        <nav aria-label="Меню" className="flex flex-col gap-2">
+          {links.map(([id, label], i) => (
+            <a
+              key={id}
+              href={`#${id}`}
+              onClick={go(ANCHORS[id])}
+              className="display text-[40px] transition-[transform,opacity,color] duration-700 hover:text-sage md:text-[72px]"
+              style={{
+                transform: open ? 'none' : 'translateY(30px)',
+                opacity: open ? 1 : 0,
+                transitionDelay: `${open ? 80 + i * 60 : 0}ms`,
+                transitionTimingFunction: 'cubic-bezier(.16,1,.3,1)',
+              }}
+            >
+              {label}
+            </a>
+          ))}
         </nav>
-        <a
-          href="#contact"
-          onClick={(e) => {
-            e.preventDefault()
-            onNav(ANCHORS.contact)
-          }}
-          className="pill pill-ghost h-10 px-4 text-[11px]"
-          style={{ color: 'var(--fg)' }}
-        >
-          <span className="hidden sm:inline">Записаться на&nbsp;просмотр</span>
-          <span className="sm:hidden">Просмотр</span>
-        </a>
+        <div className="mt-12 flex flex-col gap-1 text-paper/75">
+          <a href={OFFICE.phoneHref} className="font-display text-[28px] text-paper">{OFFICE.phone}</a>
+          <span>{OFFICE.address} · {OFFICE.hours[0]}</span>
+        </div>
       </div>
-      <div className="mx-4 h-px md:mx-10" style={{ background: 'var(--line)' }} />
-    </header>
+    </>
   )
 }
+
+/* ── hero ───────────────────────────────────────────────────── */
 
 export function Hero({ onNav }) {
   return (
     <>
-      {/* readability scrim over the bright daytime sky */}
       <div
         aria-hidden="true"
         data-ov="hero-card"
-        className="pointer-events-none fixed inset-0 z-[1] bg-[linear-gradient(90deg,rgba(18,36,30,.78)_0%,rgba(18,36,30,.42)_38%,rgba(18,36,30,0)_62%)] max-md:bg-[linear-gradient(0deg,rgba(18,36,30,.86)_0%,rgba(18,36,30,.5)_45%,rgba(18,36,30,0)_70%)]"
+        className="pointer-events-none fixed inset-0 z-[1] bg-[linear-gradient(90deg,rgba(27,40,32,.86)_0%,rgba(27,40,32,.55)_40%,rgba(27,40,32,0)_64%)] max-md:bg-[linear-gradient(0deg,rgba(27,40,32,.92)_0%,rgba(27,40,32,.6)_50%,rgba(27,40,32,0)_75%)]"
       />
       <section
         data-ov="hero"
         aria-labelledby="hero-title"
-        className="pointer-events-none fixed inset-0 z-10 flex flex-col justify-end px-4 pb-28 md:justify-center md:px-10 md:pb-0"
+        className="pointer-events-none fixed inset-0 z-10 flex flex-col justify-end px-4 pb-10 md:justify-center md:px-10 md:pb-0"
       >
-        <div className="max-w-[640px]">
-          <p data-r className="caps mb-6 flex items-center gap-3 text-paper/75">
-            <span className="h-1.5 w-1.5 rounded-full bg-terracotta" /> Новосибирск · Жилой дом
+        <div className="max-w-[700px]">
+          <p data-r className="leaf-sm inline-block bg-sage px-5 py-1.5 text-[15px] font-bold uppercase tracking-[0.04em] text-ink md:text-[18px]">
+            Дом сдан
           </p>
-          <h1 id="hero-title" className="display text-[44px] text-paper sm:text-[64px] lg:text-[88px]">
-            <span data-r className="block">Дом</span>
-            <span data-r className="block">выше</span>
-            <span data-r className="block">деревьев</span>
+          <h1 id="hero-title" className="mt-4 font-display text-[60px] leading-none text-paper sm:text-[96px] lg:text-[128px]">
+            <span data-r className="block">МИЧУРИН</span>
           </h1>
-          <p data-r className="mt-7 max-w-[440px] text-[15px] leading-relaxed text-paper/80 md:text-base">
-            Двадцать пять этажей над тихим зелёным кварталом. Панорамное остекление, видовые лоджии
-            и спортивная площадка прямо во дворе.
+          <p data-r className="mt-3 text-[24px] font-semibold text-sage md:text-[34px]">
+            Скидка 10% на квартиры*
           </p>
-          <div data-r className="pointer-events-auto mt-9 flex flex-wrap gap-3">
-            <a
-              href="#plans"
-              className="pill pill-light"
-              onClick={(e) => {
-                e.preventDefault()
-                onNav(ANCHORS.plans)
-              }}
-            >
-              Выбрать квартиру <Arrow />
+          <p data-r className="mt-4 max-w-[460px] text-[15px] leading-relaxed text-paper/80 md:text-[17px]">
+            Дом класса «комфорт-плюс» в районе Золотой Нивы — в пяти минутах пешком от метро,
+            с закрытым двором и авторскими интерьерами холлов.
+          </p>
+          <div data-r className="pointer-events-auto mt-8 flex flex-wrap gap-3">
+            <a href="#contact" className="pill pill-sage" onClick={navTo(onNav, ANCHORS.contact)}>
+              Подробные условия*
             </a>
-            <a
-              href="#contact"
-              className="pill pill-ghost text-paper"
-              onClick={(e) => {
-                e.preventDefault()
-                onNav(ANCHORS.contact)
-              }}
-            >
-              Записаться на просмотр
+            <a href="#plans" className="pill pill-ghost text-paper" onClick={navTo(onNav, ANCHORS.plans)}>
+              Смотреть квартиры <Arrow />
             </a>
           </div>
+          <p data-r className="mt-4 text-[12px] text-paper/45">* Условия акции уточняйте в офисе продаж.</p>
         </div>
       </section>
 
       <aside
         data-ov="hero-card"
-        aria-label="Видовые этажи"
-        className="glass-dark fixed bottom-28 right-10 z-10 hidden w-[300px] rounded-[18px] p-6 text-paper xl:block"
+        aria-label="Квартиры в продаже"
+        className="framed leaf card-green fixed right-12 top-[24%] z-10 hidden w-[310px] p-7 text-paper xl:block"
       >
-        <div className="flex items-start justify-between">
-          <div>
-            <p className="caps text-paper/55">Видовые этажи</p>
-            <p className="display mt-3 text-[56px]">19–25</p>
-          </div>
-          <span className="mt-1 grid h-8 w-8 place-items-center rounded-full border border-paper/25 text-[13px]">↗</span>
-        </div>
-        <p className="mt-2 text-sm text-paper/70">Графитовая «корона» дома — этажи с видом на весь город.</p>
-        <dl className="mt-5 divide-y divide-paper/10 text-[13px]">
+        <p className="caps text-sage">Каталог квартир</p>
+        <ul className="mt-4 divide-y divide-paper/10">
           {[
-            ['Фасад', 'Три тона'],
-            ['Остекление', 'В пол'],
-            ['Лоджии', 'Панорамные'],
-            ['Двор', 'Спортплощадка'],
-          ].map(([k, v]) => (
-            <div key={k} className="flex justify-between py-2.5">
-              <dt className="text-paper/55">{k}</dt>
-              <dd>{v}</dd>
-            </div>
+            ['1С', '28,49'],
+            ['1С', '29,60'],
+            ['1К', '39,10'],
+          ].map(([t, a]) => (
+            <li key={a} className="flex items-baseline justify-between py-3">
+              <span className="leaf-sm bg-sage px-2.5 py-0.5 text-[13px] font-bold text-ink">{t}</span>
+              <span className="font-display text-[26px] text-[#C9A88D]">
+                {a} <span className="text-[16px]">м²</span>
+              </span>
+            </li>
           ))}
-        </dl>
+        </ul>
+        <a href="#plans" onClick={navTo(onNav, ANCHORS.plans)} className="pill pill-sage mt-5 h-11 w-full text-[13px]">
+          Узнать подробнее
+        </a>
       </aside>
 
-      <dl
-        data-ov="hero-stats"
-        className="fixed bottom-6 left-4 right-4 z-10 hidden grid-cols-4 gap-8 text-paper md:left-10 md:grid md:max-w-[620px]"
-      >
+      {/* sage wave divider, as under the hero on the brand site */}
+      <svg data-ov="hero-stats" aria-hidden="true" className="pointer-events-none fixed inset-x-0 bottom-[92px] z-10 hidden h-10 w-full md:block" viewBox="0 0 1440 40" preserveAspectRatio="none">
+        <path d="M0 34 C 280 4, 520 6, 760 22 S 1220 40, 1440 6" fill="none" stroke="#CBDFA2" strokeWidth="1.5" />
+      </svg>
+      <dl data-ov="hero-stats" className="fixed bottom-6 left-10 z-10 hidden grid-cols-4 gap-10 text-paper md:grid">
         {[
-          ['25', 'этажей'],
-          ['3', 'тона фасада'],
-          ['360°', 'панорама'],
-          ['1', 'спортплощадка'],
+          ['5 мин', 'до метро «Золотая Нива»'],
+          ['82', 'машино-места'],
+          ['4', 'школы и лицея рядом'],
+          ['2', 'детских сада рядом'],
         ].map(([n, l]) => (
-          <div key={l} className="border-t border-paper/25 pt-3">
+          <div key={l}>
             <dt className="sr-only">{l}</dt>
-            <dd className="font-display text-[26px] font-light">{n}</dd>
-            <dd className="caps mt-1 text-paper/55">{l}</dd>
+            <dd className="font-display text-[28px] leading-none">{n}</dd>
+            <dd className="mt-1.5 max-w-[150px] text-[13px] leading-snug text-paper/60">{l}</dd>
           </div>
         ))}
       </dl>
-
-      <div data-ov="hint" aria-hidden="true" className="fixed bottom-7 right-4 z-10 flex items-center gap-3 text-paper/70 md:right-10">
-        <span className="caps">Листайте</span>
-        <span className="relative h-10 w-px overflow-hidden bg-paper/25">
-          <span className="absolute inset-x-0 top-0 h-1/2 animate-[hint_2.2s_cubic-bezier(.65,0,.35,1)_infinite] bg-paper" />
-        </span>
-      </div>
     </>
   )
 }
+
+/* round "open catalogue" badge, a fixture of the brand site */
+export function CatalogButton({ onNav }) {
+  return (
+    <a
+      href="#plans"
+      onClick={navTo(onNav, ANCHORS.plans)}
+      className="fixed bottom-6 right-6 z-20 hidden h-[118px] w-[118px] flex-col items-center justify-center gap-1 rounded-full border-[10px] border-[#5E6B47] bg-white text-center text-[11px] font-bold uppercase leading-tight text-[#5E6B47] shadow-[0_20px_40px_-20px_rgba(0,0,0,.5)] transition-transform duration-500 [transition-timing-function:cubic-bezier(.34,1.56,.64,1)] hover:scale-105 md:flex"
+    >
+      <BuildingIcon />
+      Открыть
+      <br />
+      каталог
+    </a>
+  )
+}
+
+/* ── facade chapter ─────────────────────────────────────────── */
 
 export const FloorMarker = forwardRef(function FloorMarker(_, ref) {
   return (
     <div data-ov="floor" aria-hidden="true" className="pointer-events-none fixed inset-x-0 top-1/2 z-10 -translate-y-1/2 text-paper">
       <div className="flex items-center gap-4 pl-4 md:pl-10">
         <div>
-          <p className="caps text-paper/60">Этаж</p>
-          <p ref={ref} className="display text-[72px] tabular-nums md:text-[120px]">01</p>
+          <p className="caps text-sage">Этаж</p>
+          <p ref={ref} className="font-display text-[80px] leading-none tabular-nums md:text-[140px]">01</p>
         </div>
-        <span className="h-px flex-1 bg-paper/50" />
-        <span className="mr-4 h-2 w-2 rounded-full border border-paper md:mr-10" />
+        <span className="h-[1.5px] flex-1 bg-sage/70" />
+        <span className="leaf-sm mr-4 h-4 w-4 bg-sage md:mr-10" />
       </div>
     </div>
   )
@@ -192,19 +252,19 @@ export const FloorMarker = forwardRef(function FloorMarker(_, ref) {
 
 const ZONES = [
   {
-    floors: 'Этажи 01–02',
-    title: 'Основание из тёмного кирпича',
-    text: 'Тяжёлый, тёплый цоколь с витражами в пол — для кафе, сервисов и входных групп.',
+    floors: 'Первые этажи',
+    title: 'Коммерческие помещения',
+    text: 'Основание из тёмного кирпича с витринами в пол. Магазины и сервисы — в шаге от подъезда.',
   },
   {
-    floors: 'Этажи 03–19',
-    title: 'Светлый фасад и ритм лоджий',
-    text: 'Графитовые вертикали делят светлую плоскость на ритм, лоджии остеклены от пола до потолка.',
+    floors: 'Средние этажи',
+    title: 'Светлый фасад и лоджии',
+    text: 'Графитовые вертикали задают ритм светлой плоскости, лоджии остеклены от пола до потолка.',
   },
   {
-    floors: 'Этажи 20–25',
-    title: 'Графитовая корона',
-    text: 'Верх дома собран в тёмный объём: с последних этажей город виден до самого горизонта.',
+    floors: 'Верхние этажи',
+    title: 'Графитовый верх',
+    text: 'Тёмный объём венчает дом. Отсюда открываются виды на зелёные кварталы и весь город.',
   },
 ]
 
@@ -214,16 +274,18 @@ export function Zones() {
       key={z.title}
       data-ov={`zone-${i}`}
       id={i === 0 ? 'facade' : undefined}
-      className="pointer-events-none fixed bottom-24 right-4 z-10 max-w-[380px] text-paper md:bottom-auto md:right-10 md:top-[22%]"
+      className="pointer-events-none fixed bottom-8 left-4 right-6 z-10 text-paper md:bottom-auto md:left-auto md:right-14 md:top-[22%] md:w-[400px]"
     >
-      <div className="glass-dark rounded-[18px] p-6" data-r>
-        <p className="caps text-paper/60">{z.floors}</p>
+      <div className="framed leaf card-green p-7" data-r>
+        <p className="caps text-sage">{z.floors}</p>
         <h2 className="display mt-4 text-[26px] md:text-[32px]">{z.title}</h2>
-        <p className="mt-4 text-[15px] leading-relaxed text-paper/75">{z.text}</p>
+        <p className="mt-4 text-[16px] leading-relaxed text-paper/80">{z.text}</p>
       </div>
     </section>
   ))
 }
+
+/* ── location chapter ───────────────────────────────────────── */
 
 export function Views() {
   return (
@@ -231,28 +293,33 @@ export function Views() {
       data-ov="views"
       id="views"
       aria-labelledby="views-title"
-      className="pointer-events-none fixed inset-x-0 bottom-0 z-10 px-4 pb-10 text-paper md:inset-y-0 md:flex md:flex-col md:justify-center md:px-10 md:pb-0"
+      className="pointer-events-none fixed inset-x-0 bottom-0 z-10 px-4 pb-8 text-paper md:inset-y-0 md:flex md:flex-col md:justify-center md:px-10 md:pb-0"
     >
       <div
         data-r
         aria-hidden="true"
-        className="absolute inset-0 -z-10 bg-[linear-gradient(90deg,rgba(18,36,30,.72)_0%,rgba(18,36,30,.35)_40%,rgba(18,36,30,0)_65%)] max-md:bg-[linear-gradient(0deg,rgba(18,36,30,.8)_0%,rgba(18,36,30,0)_60%)]"
+        className="absolute inset-0 -z-10 bg-[linear-gradient(90deg,rgba(27,40,32,.85)_0%,rgba(27,40,32,.5)_42%,rgba(27,40,32,0)_66%)] max-md:bg-[linear-gradient(0deg,rgba(27,40,32,.95)_0%,rgba(27,40,32,.82)_55%,rgba(27,40,32,0)_88%)]"
       />
       <div className="max-w-[560px]">
-        <p data-r className="caps text-paper/70">Виды на 360°</p>
-        <h2 id="views-title" className="display mt-5 text-[36px] md:text-[64px]">
-          <span data-r className="block">Видно</span>
-          <span data-r className="block">со всех</span>
-          <span data-r className="block">сторон</span>
+        <h2 id="views-title" className="display text-[36px] md:text-[68px]">
+          <span data-r className="block">Расположение</span>
         </h2>
-        <p data-r className="mt-6 max-w-[420px] text-[15px] leading-relaxed text-paper/80">
-          Дом стоит свободно, без соседей вплотную. Каждая сторона открывается на свой пейзаж:
-          кроны старого квартала, стадион во дворе, город до самого горизонта.
+        <p data-r className="mt-5 max-w-[480px] text-[16px] leading-relaxed text-paper/85 md:text-[17px]">
+          В 5 минутах пешком — метро «Золотая Нива» и остановки общественного транспорта. Прямой выезд
+          на улицу Богаткова ведёт к центру города, а через улицу Никитина и Гусинобродское шоссе — короткий
+          путь к автовокзалу и загородным трассам.
         </p>
+        <ul data-r className="mt-6 flex flex-wrap gap-2 text-[13px] font-semibold">
+          {['Метро «Золотая Нива»', 'Гимназия № 11 «Гармония»', 'Лицей № 113', 'НГАУ', 'Поликлиника № 7', 'Детский сад № 372'].map((t) => (
+            <li key={t} className="leaf-sm border-[1.5px] border-sage/60 px-3 py-1.5 text-paper/90">{t}</li>
+          ))}
+        </ul>
       </div>
     </section>
   )
 }
+
+/* ── plans + tour ───────────────────────────────────────────── */
 
 export function PlanIntro() {
   return (
@@ -260,14 +327,16 @@ export function PlanIntro() {
       data-ov="plan"
       id="plans"
       aria-labelledby="plan-title"
-      className="pointer-events-none fixed inset-x-0 top-24 z-10 px-4 text-ink md:top-auto md:bottom-14 md:px-10"
+      className="pointer-events-none fixed inset-x-0 top-24 z-10 px-4 text-brand md:top-auto md:bottom-14 md:px-10"
     >
-      <p data-r className="caps text-ink/55">Этаж 18 · Типовой этаж</p>
-      <h2 id="plan-title" className="display mt-4 text-[36px] md:text-[64px]">
+      <p data-r className="leaf-sm inline-block bg-sage px-4 py-1 text-[13px] font-bold uppercase text-ink">
+        {FLAT.type}-квартиры
+      </p>
+      <h2 id="plan-title" className="display mt-4 text-[40px] md:text-[68px]">
         <span data-r className="block">Планировки</span>
       </h2>
-      <p data-r className="mt-4 max-w-[420px] text-[15px] leading-relaxed text-ink/70">
-        Вынимаем один этаж из дома и заходим в квартиру — комната за комнатой.
+      <p data-r className="mt-3 max-w-[440px] text-[16px] leading-relaxed text-brand/75">
+        Вынимаем этаж из дома и заходим в однокомнатную квартиру {FLAT.total} м² — комната за комнатой.
       </p>
     </section>
   )
@@ -278,31 +347,51 @@ export const Tour = forwardRef(function Tour(_, dotsRef) {
     <section
       data-ov="tour"
       aria-label="Тур по квартире"
-      className="pointer-events-none fixed inset-x-4 bottom-4 z-10 text-ink md:inset-x-auto md:bottom-10 md:left-10 md:w-[380px]"
+      className="pointer-events-none fixed bottom-4 left-4 right-6 z-10 text-ink md:bottom-10 md:left-10 md:right-auto md:w-[400px]"
     >
-      <div className="glass-light relative min-h-[214px] overflow-hidden rounded-[18px] p-6">
-        <p className="caps flex items-center justify-between text-ink/50">
-          <span>Квартира 18.4 · 71 м²</span>
-          <span className="rounded-full border border-ink/15 px-2 py-0.5 text-[9px]">Пример планировки</span>
-        </p>
+      <div className="framed leaf card-white relative min-h-[236px] p-7">
+        <div className="flex items-center justify-between">
+          <span className="leaf-sm bg-sage px-2.5 py-0.5 text-[13px] font-bold">{FLAT.type}</span>
+          <span className="text-[13px] text-ink/55">Общая площадь {FLAT.total} м²</span>
+        </div>
         <div className="relative mt-4">
           {ROOMS.map((room, i) => (
             <article key={room.id} data-room={i} className={i === 0 ? 'relative' : 'absolute inset-0'}>
-              <p data-r className="caps text-terracotta">{room.kicker}</p>
-              <h3 data-r className="mt-2 font-display text-[22px] font-light leading-tight">{room.title}</h3>
-              <p data-r className="mt-3 text-[14px] leading-relaxed text-ink/70">{room.text}</p>
+              <p data-r className="font-display text-[40px] leading-none text-taupe">
+                {room.area} <span className="text-[22px]">м²</span>
+              </p>
+              <h3 data-r className="mt-2 text-[20px] font-bold uppercase tracking-[0.02em] text-brand">{room.title}</h3>
+              <p data-r className="mt-2 text-[15px] leading-relaxed text-ink/70">{room.text}</p>
             </article>
           ))}
         </div>
       </div>
-      <div ref={dotsRef} className="mt-4 flex gap-2 pl-1" aria-hidden="true">
+      <div ref={dotsRef} className="mt-5 flex gap-2 pl-1" aria-hidden="true">
         {ROOMS.map((r) => (
-          <span key={r.id} className="h-1.5 w-1.5 rounded-full bg-ink/20 transition-[width,background-color] duration-500 [transition-timing-function:cubic-bezier(.16,1,.3,1)]" />
+          <span key={r.id} className="h-2 w-2 rounded-full bg-brand/20 transition-[width,background-color] duration-500 [transition-timing-function:cubic-bezier(.16,1,.3,1)]" />
         ))}
       </div>
     </section>
   )
 })
+
+/* ── contact ────────────────────────────────────────────────── */
+
+const Leaves = () => (
+  <svg aria-hidden="true" className="absolute inset-0 h-full w-full opacity-[0.16]" viewBox="0 0 800 800" preserveAspectRatio="xMidYMid slice">
+    <g fill="#5E7A5F">
+      <path d="M90 720 C 60 520, 180 380, 360 330 C 330 520, 240 660, 90 720 Z" />
+      <path d="M520 120 C 640 60, 780 110, 820 240 C 690 280, 570 230, 520 120 Z" />
+      <path d="M620 760 C 600 600, 690 500, 820 470 C 830 610, 760 720, 620 760 Z" />
+      <path d="M-20 160 C 80 80, 220 90, 290 190 C 190 260, 60 250, -20 160 Z" />
+    </g>
+    <g fill="none" stroke="#7E9C74" strokeWidth="2">
+      <path d="M90 720 C 180 560, 260 450, 360 330" />
+      <path d="M520 120 C 620 160, 720 200, 820 240" />
+      <path d="M-20 160 C 90 175, 200 185, 290 190" />
+    </g>
+  </svg>
+)
 
 export function Contact() {
   const [sent, setSent] = useState(false)
@@ -311,50 +400,70 @@ export function Contact() {
       data-ov="contact"
       id="contact"
       aria-labelledby="contact-title"
-      className="pointer-events-none fixed inset-0 z-10 flex flex-col justify-end px-4 pb-8 text-paper md:justify-center md:px-10 md:pb-0 [&_[data-r]]:pointer-events-auto"
+      className="pointer-events-none fixed inset-0 z-10 flex flex-col justify-end px-4 pb-6 pt-24 text-paper md:justify-center md:px-10 md:pb-0 [&_[data-r]]:pointer-events-auto"
     >
-      <div className="max-w-[520px]">
-        <p data-r className="caps text-paper/60">Отдел продаж</p>
-        <h2 id="contact-title" className="display mt-5 text-[36px] md:text-[64px]">
-          <span data-r className="block">Приходите</span>
-          <span data-r className="block">в гости</span>
-        </h2>
-        <p data-r className="mt-5 max-w-[420px] text-[15px] leading-relaxed text-paper/75">
-          Покажем дом, двор и квартиры на верхних этажах. Оставьте телефон — менеджер перезвонит
-          и подберёт удобное время.
-        </p>
-        <div data-r>
-          {sent ? (
-            <p role="status" className="mt-10 font-display text-xl font-light">Спасибо! Мы перезвоним в течение дня.</p>
-          ) : (
-            <form
-              className="mt-8 grid gap-5 sm:grid-cols-2"
-              onSubmit={(e) => {
-                e.preventDefault()
-                setSent(true)
-              }}
-            >
-              <label className="block">
-                <span className="caps text-paper/55">Имя</span>
-                <input required name="name" autoComplete="name" className="field" placeholder="Как к вам обращаться" />
-              </label>
-              <label className="block">
-                <span className="caps text-paper/55">Телефон</span>
-                <input required name="phone" type="tel" autoComplete="tel" inputMode="tel" pattern="[0-9+()\- ]{10,}" className="field" placeholder="+7 ___ ___-__-__" />
-              </label>
-              <button type="submit" className="pill pill-light mt-2 w-fit sm:col-span-2">
-                Записаться на просмотр <Arrow />
-              </button>
-              <p className="text-[12px] text-paper/45 sm:col-span-2">
-                Нажимая кнопку, вы соглашаетесь на обработку персональных данных.
-              </p>
-            </form>
-          )}
-        </div>
+      <div data-r aria-hidden="true" className="!pointer-events-none absolute inset-0 -z-10">
+        <Leaves />
       </div>
-      <footer data-r className="mt-12 flex flex-wrap items-center justify-between gap-4 border-t border-paper/15 pt-5 text-[12px] text-paper/50 md:absolute md:inset-x-10 md:bottom-6 md:mt-0">
-        <Logo className="text-paper" />
+      <div className="grid items-end gap-10 lg:grid-cols-[minmax(0,560px)_minmax(0,360px)] lg:justify-between lg:pr-36">
+        <div>
+          <h2 id="contact-title" className="display text-[34px] md:text-[60px]">
+            <span data-r className="block">Хотите узнать</span>
+            <span data-r className="block">больше?</span>
+          </h2>
+          <p data-r className="mt-3 text-[16px] text-paper/80 md:text-[18px]">
+            Оставьте свои контактные данные, и мы свяжемся с вами
+          </p>
+          <div data-r>
+            {sent ? (
+              <p role="status" className="mt-8 font-display text-[26px] text-sage">Спасибо! Мы перезвоним в течение рабочего дня.</p>
+            ) : (
+              <form
+                className="mt-6 grid gap-3 sm:grid-cols-2"
+                onSubmit={(e) => {
+                  e.preventDefault()
+                  setSent(true)
+                }}
+              >
+                <label className="block">
+                  <span className="sr-only">Имя</span>
+                  <input required name="name" autoComplete="name" className="field" placeholder="Имя" />
+                </label>
+                <label className="block">
+                  <span className="sr-only">Телефон</span>
+                  <input required name="phone" type="tel" autoComplete="tel" inputMode="tel" pattern="[0-9+()\- ]{10,}" className="field" placeholder="+7 (000) 000-00-00" />
+                </label>
+                <label className="flex items-start gap-3 text-[13px] leading-snug text-paper/80 sm:col-span-2">
+                  <input required type="checkbox" name="consent" className="check" />
+                  <span>Я даю согласие на обработку моих персональных данных и принимаю условия политики их обработки</span>
+                </label>
+                <button type="submit" className="pill pill-sage mt-1 w-full sm:col-span-2 sm:w-fit sm:px-16">
+                  Отправить
+                </button>
+              </form>
+            )}
+          </div>
+        </div>
+
+        <address data-r className="framed leaf card-green hidden p-8 not-italic lg:block">
+          <p className="display text-[30px]">Офис продаж</p>
+          <p className="mt-4 text-paper/85">{OFFICE.address}</p>
+          <p className="mt-3 text-paper/70">
+            {OFFICE.hours[0]}
+            <br />
+            {OFFICE.hours[1]}
+          </p>
+          <a href={OFFICE.phoneHref} className="mt-5 block font-display text-[28px] transition-colors hover:text-sage">
+            {OFFICE.phone}
+          </a>
+          <a href={`mailto:${OFFICE.email}`} className="mt-1 block text-paper/80 hover:text-sage">{OFFICE.email}</a>
+        </address>
+      </div>
+      <footer data-r className="mt-6 flex flex-wrap items-center justify-between gap-x-6 gap-y-1 border-t-[1.5px] border-sage/30 pt-4 text-[13px] text-paper/60 md:absolute md:inset-x-10 md:bottom-6 md:mt-0 md:pr-36">
+        <a href={OFFICE.phoneHref} className="font-semibold text-paper lg:hidden">{OFFICE.phone}</a>
+        <span className="lg:hidden">{OFFICE.address}</span>
         <span>© 2026 Жилой дом «Мичурин», Новосибирск</span>
+        <span className="hidden md:inline">Финансирование строительства — АО «Банк ДОМ.РФ»</span>
       </footer>
     </section>
   )

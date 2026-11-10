@@ -4,20 +4,20 @@ export default {
   theme: {
     extend: {
       colors: {
-        brand: { DEFAULT: '#203A32', deep: '#12241E', soft: '#4E6B57' },
-        ink: '#101513',
-        paper: '#F3F1EC',
-        clay: '#ECE9E4',
+        // sampled from дом-мичурин.рф
+        brand: { DEFAULT: '#26372D', deep: '#1B2820', plan: '#425A4C' },
+        sage: { DEFAULT: '#CBDFA2', soft: '#E2EDDE' },
+        taupe: '#9F7E64',
+        ink: '#1F2E25',
+        paper: '#F3F3F1',
         sky: { top: '#4F86C6', low: '#CFDDE7' },
-        facade: { top: '#6E737A', mid: '#E3E5E7', base: '#4B4240' },
-        terracotta: '#C2704F',
       },
       fontFamily: {
-        display: ['"Unbounded"', 'system-ui', 'sans-serif'],
-        sans: ['"Manrope"', 'system-ui', 'sans-serif'],
-        serif: ['"Cormorant Garamond"', 'Georgia', 'serif'],
+        display: ['"Prata"', 'Georgia', 'serif'],
+        sans: ['"Nunito"', 'system-ui', 'sans-serif'],
       },
-      letterSpacing: { caps: '0.16em' },
+      letterSpacing: { caps: '0.08em' },
+      borderRadius: { leaf: '2.75rem' },
     },
   },
   plugins: [],

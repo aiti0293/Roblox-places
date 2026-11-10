@@ -1,9 +1,7 @@
-@import '@fontsource/unbounded/300.css';
-@import '@fontsource/unbounded/400.css';
-@import '@fontsource/manrope/400.css';
-@import '@fontsource/manrope/500.css';
-@import '@fontsource/manrope/600.css';
-@import '@fontsource/cormorant-garamond/500.css';
+@import '@fontsource/prata/400.css';
+@import '@fontsource/nunito/400.css';
+@import '@fontsource/nunito/600.css';
+@import '@fontsource/nunito/700.css';
 
 @tailwind base;
 @tailwind components;
@@ -18,71 +16,87 @@ html.lenis, html.lenis body { height: auto; }
 .lenis.lenis-smooth { scroll-behavior: auto !important; }
 
 body {
-  background: #12241E;
-  color: #F3F1EC;
-  font-family: 'Manrope', system-ui, sans-serif;
+  background: #26372D;
+  color: #F3F3F1;
+  font-family: 'Nunito', system-ui, sans-serif;
   -webkit-font-smoothing: antialiased;
   overscroll-behavior: none;
 }
 
-::selection { background: #203A32; color: #F3F1EC; }
+::selection { background: #CBDFA2; color: #26372D; }
 
 [data-ov="header"] {
-  --fg: #F3F1EC;
-  --fg-soft: rgba(243, 241, 236, 0.6);
-  --line: rgba(243, 241, 236, 0.2);
+  --fg: #F3F3F1;
+  --fg-soft: rgba(243, 243, 241, 0.65);
+  --line: rgba(203, 223, 162, 0.35);
   color: var(--fg);
 }
 
 @layer components {
-  .caps { @apply font-sans text-[11px] font-semibold uppercase tracking-caps; }
-  .display { @apply font-display font-light uppercase leading-[0.95] tracking-[-0.01em]; }
+  .caps { @apply font-sans text-[12px] font-semibold uppercase tracking-caps; }
+  /* Prata stands in for the brand's high-contrast display face */
+  .display { @apply font-display uppercase leading-[1.02] tracking-[0.01em]; }
 
-  .glass-dark {
-    background: rgba(16, 21, 19, 0.42);
-    border: 1px solid rgba(243, 241, 236, 0.16);
-    backdrop-filter: blur(22px) saturate(140%);
-    -webkit-backdrop-filter: blur(22px) saturate(140%);
+  /* the brand "leaf": two opposite corners rounded, two square */
+  .leaf { border-radius: 2.75rem 0 2.75rem 0; }
+  .leaf-sm { border-radius: 1.4rem 0 1.4rem 0; }
+  .leaf-r { border-radius: 0 2.75rem 0 2.75rem; }
+
+  /* offset sage outline that frames cards and images on the site */
+  .framed { position: relative; isolation: isolate; }
+  .framed::after {
+    content: ''; position: absolute; inset: 10px -10px -10px 10px; z-index: -1;
+    border: 1.5px solid #CBDFA2; border-radius: inherit; pointer-events: none;
   }
-  .glass-light {
-    background: rgba(255, 255, 255, 0.72);
-    border: 1px solid rgba(255, 255, 255, 0.9);
-    box-shadow: 0 30px 60px -30px rgba(32, 58, 50, 0.35), 0 2px 6px rgba(32, 58, 50, 0.06);
-    backdrop-filter: blur(20px) saturate(150%);
-    -webkit-backdrop-filter: blur(20px) saturate(150%);
+
+  .card-green { background: rgba(38, 55, 45, 0.92); }
+  .card-white {
+    background: #ffffff;
+    box-shadow: 0 30px 60px -30px rgba(38, 55, 45, 0.35), 0 2px 6px rgba(38, 55, 45, 0.06);
   }
 
   .pill {
-    @apply inline-flex h-11 items-center gap-3 rounded-full px-5 text-[12px] font-semibold uppercase tracking-[0.12em];
-    transition: transform 0.5s var(--ease-spring), background-color 0.4s var(--ease-out), color 0.4s var(--ease-out);
+    @apply inline-flex h-12 items-center justify-center gap-3 rounded-full px-7 text-[14px] font-semibold uppercase tracking-[0.04em];
+    transition: transform 0.5s var(--ease-spring), background-color 0.4s var(--ease-out), box-shadow 0.4s var(--ease-out);
   }
   .pill:hover { transform: translateY(-2px); }
   .pill:active { transform: translateY(0) scale(0.97); transition-duration: 0.15s; }
-  .pill:focus-visible, a:focus-visible, button:focus-visible, input:focus-visible {
-    outline: 2px solid #C2704F;
-    outline-offset: 3px;
-  }
-  .pill-light { @apply bg-paper text-ink; }
-  .pill-light:hover { background: #ffffff; }
-  .pill-ghost { border: 1px solid currentColor; }
-  .pill-ghost:hover { background: rgba(243, 241, 236, 0.12); }
+  .pill-sage { @apply bg-sage text-ink; }
+  .pill-sage:hover { background: #d8e8b6; box-shadow: 0 10px 30px -12px rgba(203, 223, 162, 0.8); }
+  .pill-taupe { @apply bg-taupe text-paper; }
+  .pill-taupe:hover { background: #ad8c71; }
+  .pill-ghost { border: 1.5px solid #CBDFA2; }
+  .pill-ghost:hover { background: rgba(203, 223, 162, 0.14); }
   .pill .arrow { transition: transform 0.5s var(--ease-spring); }
   .pill:hover .arrow { transform: translateX(4px); }
 
+  .pill:focus-visible, a:focus-visible, button:focus-visible, input:focus-visible {
+    outline: 2px solid #CBDFA2;
+    outline-offset: 3px;
+  }
+
   .nav-link { position: relative; }
   .nav-link::after {
-    content: ''; position: absolute; left: 0; right: 0; bottom: -6px; height: 1px;
-    background: currentColor; transform: scaleX(0); transform-origin: right;
+    content: ''; position: absolute; left: 0; right: 0; bottom: -6px; height: 1.5px;
+    background: #CBDFA2; transform: scaleX(0); transform-origin: right;
     transition: transform 0.6s var(--ease-out);
   }
   .nav-link:hover::after { transform: scaleX(1); transform-origin: left; }
 
   .field {
-    @apply w-full bg-transparent py-3 text-[15px] text-paper placeholder:text-paper/45;
-    border-bottom: 1px solid rgba(243, 241, 236, 0.28);
-    transition: border-color 0.4s var(--ease-out);
+    @apply h-14 w-full rounded-[10px] bg-white px-5 text-[16px] text-ink placeholder:text-ink/40;
+    transition: box-shadow 0.4s var(--ease-out);
   }
-  .field:focus { outline: none; border-color: #F3F1EC; }
+  .field:focus { outline: none; box-shadow: 0 0 0 3px #CBDFA2; }
+
+  .check {
+    @apply mt-0.5 h-6 w-6 shrink-0 appearance-none rounded-[3px] border-2 border-paper/50 bg-transparent;
+    transition: background-color 0.3s var(--ease-out), border-color 0.3s var(--ease-out);
+  }
+  .check:checked {
+    border-color: #CBDFA2;
+    background: #CBDFA2 url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='M3 8.5l3 3 7-7' fill='none' stroke='%2326372D' stroke-width='2.2'/%3E%3C/svg%3E") center/80% no-repeat;
+  }
 }
 
 @keyframes hint {
