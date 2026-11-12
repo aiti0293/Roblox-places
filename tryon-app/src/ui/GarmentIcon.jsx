@@ -1,6 +1,6 @@
 /**
- * Плоские силуэты вещей для карточек (пока нет фото товаров).
- * Цвет — из каталога, лёгкий градиент и строчки придают «тканевость».
+ * Flat garment silhouettes, used as a graceful fallback when a photo
+ * cannot be loaded.
  */
 const PATHS = {
   jacket: {

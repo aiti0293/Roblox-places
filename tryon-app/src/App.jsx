@@ -1,82 +1,97 @@
-import { useRef } from 'react'
-import { motion } from 'framer-motion'
-import { Scene } from './three/Scene'
-import { SelectedPanel } from './ui/SelectedPanel'
-import { ClothesCarousel } from './ui/ClothesCarousel'
-import { RotatePill } from './ui/RotatePill'
-import { Dial } from './ui/Dial'
+import { useState } from 'react'
+import { AnimatePresence, motion } from 'framer-motion'
+import { Gallery } from './ui/Gallery'
+import { MannequinToggle } from './ui/MannequinToggle'
+import { ParamCard } from './ui/ParamCard'
+import { NextButton } from './ui/NextButton'
 import { useBodyStore } from './store/useBodyStore'
-import { useViewStore } from './store/useViewStore'
+import { PRODUCT, formatPrice } from './data/product'
 import { LIMITS } from './lib/body'
+import { getBridge } from './lib/miniapp'
 import { spring } from './ui/springs'
 
-/**
- * Раскладка по эскизу:
- *  ┌ Выбранная одежда ┬ Манекен ┐
- *  ├ лента карточек   ┤  ‹ ○ ›  │
- *  └ Вес, кг (крутилка)   Рост, см ┘
- */
-export default function App() {
-  const height = useBodyStore((s) => s.height)
-  const weight = useBodyStore((s) => s.weight)
-  const setValue = useBodyStore((s) => s.setValue)
-
-  return (
-    <div
-      className="mx-auto flex w-full max-w-[560px] flex-col overflow-hidden bg-[radial-gradient(90%_60%_at_75%_30%,#fbf7f3_0%,#f3e9e1_60%,#ece0d6_100%)]"
-      style={{ height: 'var(--tg-viewport-stable-height, 100dvh)' }}
-    >
-      <div className="grid min-h-0 basis-[64%] shrink-0 grid-cols-[1.12fr_1fr]">
-        {/* левая колонка */}
-        <div className="flex min-h-0 min-w-0 flex-col justify-between py-5 pl-4 pr-1">
-          <SelectedPanel />
-          <ClothesCarousel />
-        </div>
-
-        {/* правая колонка — манекен */}
-        <div className="relative min-h-0 min-w-0">
-          <SpinSurface>
-            <Scene />
-          </SpinSurface>
-          <div className="absolute inset-x-0 bottom-4 flex justify-center">
-            <RotatePill />
-          </div>
-        </div>
-      </div>
-
-      {/* регуляторы */}
-      <motion.section
-        initial={{ y: 40, opacity: 0 }}
-        animate={{ y: 0, opacity: 1 }}
-        transition={{ ...spring.soft, delay: 0.15 }}
-        className="grid flex-1 grid-cols-2 gap-2 rounded-t-[28px] bg-white px-4 pt-4 shadow-[0_-8px_30px_rgb(80_40_25/0.08)]"
-        style={{ paddingBottom: 'max(12px, env(safe-area-inset-bottom))' }}
-      >
-        <Dial label="Вес" unit="кг" value={weight} onChange={(v) => setValue('weight', v)} {...LIMITS.weight} />
-        <Dial label="Рост" unit="см" value={height} onChange={(v) => setValue('height', v)} {...LIMITS.height} />
-      </motion.section>
-    </div>
-  )
+const TONES = {
+  weight: { card: 'bg-[#f7ebe4]', primary: 'bg-[#a4553f] text-white' },
+  height: { card: 'bg-[#e7edf3]', primary: 'bg-[#3d5a80] text-white' },
 }
 
-/** Свайп по манекену поворачивает его (вместе с кнопками ‹ ○ ›). */
-function SpinSurface({ children }) {
-  const last = useRef(null)
-  const rotateBy = useViewStore((s) => s.rotateBy)
+const enter = (delay) => ({
+  initial: { opacity: 0, y: 24 },
+  animate: { opacity: 1, y: 0 },
+  transition: { ...spring.soft, delay },
+})
+
+/**
+ * Layout (by the sketch):
+ *   ВЫБРАННАЯ ОДЕЖДА          [МАНЕКЕН]
+ *   ┌──────── photo gallery ────────┐
+ *   [ ВЕС кг ]  [ РОСТ см ]
+ *   price                     (Далее →)
+ */
+export default function App() {
+  const [onModel, setOnModel] = useState(true)
+  const weight = useBodyStore((s) => s.weight)
+  const height = useBodyStore((s) => s.height)
+  const setValue = useBodyStore((s) => s.setValue)
+  const mode = onModel ? 'model' : 'hanger'
+
+  const next = () => {
+    try {
+      getBridge()?.HapticFeedback?.impactOccurred?.('medium')
+    } catch {
+      /* noop */
+    }
+    // TODO: next step of the flow (size selection / cart)
+  }
+
   return (
     <div
-      className="absolute inset-0 touch-pan-y"
-      onPointerDown={(e) => (last.current = e.clientX)}
-      onPointerMove={(e) => {
-        if (last.current === null) return
-        rotateBy((e.clientX - last.current) * 0.012)
-        last.current = e.clientX
+      className="mx-auto flex w-full max-w-[520px] flex-col gap-4 px-4"
+      style={{
+        height: 'var(--tg-viewport-stable-height, 100dvh)',
+        paddingTop: 'max(16px, env(safe-area-inset-top))',
+        paddingBottom: 'max(16px, env(safe-area-inset-bottom))',
       }}
-      onPointerUp={() => (last.current = null)}
-      onPointerLeave={() => (last.current = null)}
-      onPointerCancel={() => (last.current = null)}
     >
-      {children}
+      <motion.header {...enter(0)} className="flex shrink-0 items-start justify-between gap-3">
+        <div>
+          <h1 className="text-[30px] font-extrabold uppercase leading-[1.02] tracking-tight text-ink">
+            Выбранная
+            <br />
+            одежда
+          </h1>
+          <p className="mt-1.5 text-[16px] font-medium text-muted">{PRODUCT.name}</p>
+        </div>
+        <MannequinToggle on={onModel} onToggle={() => setOnModel((v) => !v)} />
+      </motion.header>
+
+      <motion.div {...enter(0.08)} className="flex min-h-0 flex-1 flex-col">
+        <AnimatePresence mode="wait" initial={false}>
+          <motion.div
+            key={mode}
+            className="flex min-h-0 flex-1 flex-col"
+            initial={{ opacity: 0, scale: 0.97 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.97 }}
+            transition={{ duration: 0.28, ease: [0.22, 1, 0.36, 1] }}
+          >
+            <Gallery slides={PRODUCT.photos[mode]} color={PRODUCT.color} badge={onModel ? 'Фото на модели' : 'Фото на вешалке'} />
+          </motion.div>
+        </AnimatePresence>
+      </motion.div>
+
+      <motion.section {...enter(0.16)} className="grid shrink-0 grid-cols-2 gap-3">
+        <ParamCard label="ВЕС" unit="кг" value={weight} onChange={(v) => setValue('weight', v)} tone={TONES.weight} {...LIMITS.weight} />
+        <ParamCard label="РОСТ" unit="см" value={height} onChange={(v) => setValue('height', v)} tone={TONES.height} {...LIMITS.height} />
+      </motion.section>
+
+      <motion.footer {...enter(0.24)} className="flex shrink-0 items-center justify-between gap-3">
+        <div className="leading-tight">
+          <div className="text-[14px] font-medium text-muted">Цена</div>
+          <div className="text-[24px] font-extrabold tabular-nums text-ink">{formatPrice(PRODUCT.price)}</div>
+        </div>
+        <NextButton onClick={next} />
+      </motion.footer>
     </div>
   )
 }
