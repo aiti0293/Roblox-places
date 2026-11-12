@@ -3,10 +3,22 @@
 
 @theme {
   --font-sans: 'Manrope', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
-  --color-cream: #f4f1ec;
-  --color-sand: #e7e1da;
-  --color-ink: #1f1a17;
-  --color-muted: #6b625b;
+
+  /* Palette «Тёплый беж»: ivory base, espresso text and three soft accents
+     from one warm family — powder rose, sage and caramel. */
+  --color-ivory: #f8f4ee;
+  --color-cream: #f1ebe3;
+  --color-sand: #e6ddd2;
+  --color-ink: #2e2420; /* warm espresso instead of pure black */
+  --color-muted: #6e6058;
+
+  --color-rose: #b26a5e; /* weight */
+  --color-rose-soft: #f6e4de;
+  --color-sage: #62806a; /* height */
+  --color-sage-soft: #e4ece3;
+  --color-caramel: #8a5a2e; /* size */
+  --color-caramel-ink: #5c3a1a;
+  --color-caramel-soft: #f3e3cc;
 }
 
 html,
@@ -17,7 +29,7 @@ body,
 
 body {
   margin: 0;
-  background: #f6f4f1;
+  background: radial-gradient(120% 60% at 50% 0%, #fdfaf6 0%, var(--color-ivory) 55%, #f3ece3 100%) fixed;
   color: var(--color-ink);
   font-family: var(--font-sans);
   -webkit-font-smoothing: antialiased;

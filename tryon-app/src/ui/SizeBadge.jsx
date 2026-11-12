@@ -21,7 +21,7 @@ export function SizeBadge({ size, letter, fit }) {
   return (
     <motion.div
       animate={pulse}
-      className="flex min-w-0 flex-1 flex-col justify-center rounded-[26px] bg-[#e2ecdd] px-5 py-2.5 text-[#22402a] shadow-[0_10px_26px_-16px_rgb(34_64_42/0.6)]"
+      className="flex min-w-0 flex-1 flex-col justify-center rounded-[26px] bg-caramel-soft px-5 py-2.5 text-caramel-ink ring-1 ring-caramel/15 shadow-[0_10px_26px_-16px_rgb(138_90_46/0.7)]"
       aria-live="polite"
       aria-label={fit === 'above' ? `Ближайший размер: ${size}, уточните у консультанта` : `Ваш размер: ${size}`}
     >
@@ -52,13 +52,13 @@ export function SizeBadge({ size, letter, fit }) {
               animate="center"
               exit="exit"
               transition={spring.snappy}
-              className="text-[42px] font-extrabold leading-none tabular-nums tracking-tight"
+              className="text-[42px] font-extrabold leading-none tabular-nums tracking-tight text-caramel-ink"
             >
               {size}
             </motion.span>
           </AnimatePresence>
         </span>
-        <span className="text-[20px] font-bold opacity-75">{letter}</span>
+        <span className="text-[20px] font-bold text-caramel">{letter}</span>
       </div>
     </motion.div>
   )

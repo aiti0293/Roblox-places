@@ -13,8 +13,8 @@ export function MannequinToggle({ on, onToggle }) {
       aria-pressed={on}
       whileTap={{ scale: 0.92 }}
       transition={spring.bouncy}
-      className={`flex shrink-0 items-center gap-2.5 rounded-[22px] py-2.5 pl-3 pr-4 shadow-[0_8px_20px_-10px_rgb(40_30_20/0.4)] transition-colors duration-300 ${
-        on ? 'bg-ink text-white' : 'bg-white text-ink ring-1 ring-black/10'
+      className={`flex shrink-0 items-center gap-2.5 rounded-[22px] py-2.5 pl-3 pr-4 shadow-[0_8px_20px_-10px_rgb(92_58_26/0.4)] transition-colors duration-300 ${
+        on ? 'bg-ink text-white' : 'bg-white text-ink ring-1 ring-sand'
       }`}
     >
       <span className={`grid size-9 place-items-center rounded-full transition-colors duration-300 ${on ? 'bg-white/15' : 'bg-cream'}`}>

@@ -10,7 +10,7 @@ export function Photo({ src, alt, view, color, eager }) {
   const [state, setState] = useState('loading')
 
   return (
-    <div className="absolute inset-0 overflow-hidden bg-[#ece7e1]">
+    <div className="absolute inset-0 overflow-hidden bg-[#efe6db]">
       {state !== 'error' && (
         <motion.img
           src={src}
@@ -27,7 +27,7 @@ export function Photo({ src, alt, view, color, eager }) {
       )}
 
       {state === 'loading' && (
-        <div className="absolute inset-0 animate-pulse bg-[linear-gradient(110deg,#ece7e1_30%,#f6f2ee_50%,#ece7e1_70%)]" />
+        <div className="absolute inset-0 animate-pulse bg-[linear-gradient(110deg,#efe6db_30%,#f8f2ea_50%,#efe6db_70%)]" />
       )}
 
       {state === 'error' && <Fallback view={view} color={color} />}
@@ -50,7 +50,7 @@ function Fallback({ view, color }) {
     )
   }
   return (
-    <div className="absolute inset-0 grid place-items-center bg-[radial-gradient(90%_70%_at_50%_35%,#fbf9f6_0%,#ece6df_100%)]">
+    <div className="absolute inset-0 grid place-items-center bg-[radial-gradient(90%_70%_at_50%_35%,#fbf7f1_0%,#eadfd1_100%)]">
       <GarmentIcon kind="jacket" color={color} className={`h-[62%] w-[62%] drop-shadow-xl ${view === 'back' ? '-scale-x-100 opacity-90' : ''}`} />
     </div>
   )

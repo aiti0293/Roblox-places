@@ -13,8 +13,8 @@ import { getBridge } from './lib/miniapp'
 import { spring } from './ui/springs'
 
 const TONES = {
-  weight: { card: 'bg-[#f7ebe4]', primary: 'bg-[#a4553f] text-white' },
-  height: { card: 'bg-[#e7edf3]', primary: 'bg-[#3d5a80] text-white' },
+  weight: { card: 'bg-rose-soft', primary: 'bg-rose text-white', label: 'text-rose' },
+  height: { card: 'bg-sage-soft', primary: 'bg-sage text-white', label: 'text-sage' },
 }
 
 const enter = (delay) => ({
@@ -63,9 +63,8 @@ export default function App() {
             <br />
             одежда
           </h1>
-          <p className="mt-1.5 text-[16px] font-medium text-muted">
-            {PRODUCT.name} · <span className="whitespace-nowrap font-bold text-ink">{formatPrice(PRODUCT.price)}</span>
-          </p>
+          <p className="mt-1.5 text-[16px] font-medium leading-snug text-muted">{PRODUCT.name}</p>
+          <p className="whitespace-nowrap text-[18px] font-extrabold tabular-nums text-caramel">{formatPrice(PRODUCT.price)}</p>
         </div>
         <MannequinToggle on={onModel} onToggle={() => setOnModel((v) => !v)} />
       </motion.header>

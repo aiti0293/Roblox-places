@@ -14,8 +14,8 @@ export function initMiniApp() {
     app.ready?.()
     app.expand?.()
     app.disableVerticalSwipes?.() // swipes in the gallery must not close the app
-    app.setHeaderColor?.('#f6f4f1')
-    app.setBackgroundColor?.('#f6f4f1')
+    app.setHeaderColor?.('#f8f4ee')
+    app.setBackgroundColor?.('#f8f4ee')
   } catch {
     /* старые клиенты не поддерживают часть методов */
   }

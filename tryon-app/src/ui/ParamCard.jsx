@@ -27,10 +27,10 @@ export function ParamCard({ label, unit, value, min, max, step = 1, onChange, to
   const plus = useHoldRepeat(() => change(step))
 
   return (
-    <div className={`flex flex-col rounded-[28px] p-4 shadow-[0_10px_30px_-14px_rgb(40_30_20/0.25)] ${tone.card}`} role="group" aria-label={`${label}, ${unit}`}>
+    <div className={`flex flex-col rounded-[28px] p-4 shadow-[0_10px_30px_-14px_rgb(92_58_26/0.28)] ${tone.card}`} role="group" aria-label={`${label}, ${unit}`}>
       <div className="flex items-baseline gap-1.5">
         <span className="text-[18px] font-extrabold tracking-wide text-ink">{label}</span>
-        <span className="text-[16px] font-semibold text-muted">{unit}</span>
+        <span className={`text-[16px] font-bold ${tone.label}`}>{unit}</span>
       </div>
 
       <div className="relative my-1 flex h-[64px] items-center justify-center overflow-hidden" aria-live="polite">
@@ -75,7 +75,7 @@ function RoundButton({ children, label, disabled, tone, handlers, primary }) {
       whileTap={{ scale: 0.88 }}
       transition={spring.bouncy}
       className={`grid h-14 flex-1 touch-none select-none place-items-center rounded-full transition-colors disabled:opacity-35 ${
-        primary ? tone.primary : 'bg-white text-ink ring-1 ring-black/5'
+        primary ? tone.primary : 'bg-white text-ink ring-1 ring-sand'
       }`}
       {...handlers}
     >

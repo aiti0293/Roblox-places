@@ -63,7 +63,7 @@ export function Gallery({ slides, color, badge }) {
         if (e.key === 'ArrowLeft') goTo(index - 1)
       }}
     >
-      <div ref={viewport} className="relative min-h-0 flex-1 overflow-hidden rounded-[32px] shadow-[0_18px_40px_-18px_rgb(40_30_20/0.35)]">
+      <div ref={viewport} className="relative min-h-0 flex-1 overflow-hidden rounded-[32px] shadow-[0_18px_40px_-18px_rgb(92_58_26/0.4)]">
         <motion.div
           className="absolute inset-y-0 left-0 flex cursor-grab touch-pan-y active:cursor-grabbing"
           style={{ x, gap: GAP }}
@@ -98,7 +98,7 @@ export function Gallery({ slides, color, badge }) {
         </div>
 
         {/* bottom overlay: caption */}
-        <div className="pointer-events-none absolute inset-x-0 bottom-0 h-28 bg-gradient-to-t from-black/45 to-transparent" />
+        <div className="pointer-events-none absolute inset-x-0 bottom-0 h-28 bg-gradient-to-t from-[#2e2420]/50 to-transparent" />
         <div className="pointer-events-none absolute bottom-4 left-5">
           <AnimatePresence mode="popLayout" initial={false}>
             <motion.span
@@ -124,7 +124,7 @@ export function Gallery({ slides, color, badge }) {
         {slides.map((s, i) => (
           <button key={s.id} onClick={() => goTo(i)} aria-label={`Фото ${i + 1}: ${s.caption}`} className="grid h-8 w-8 place-items-center">
             <motion.span
-              animate={{ width: i === index ? 26 : 9, backgroundColor: i === index ? '#1f1a17' : '#cfc7bf' }}
+              animate={{ width: i === index ? 26 : 9, backgroundColor: i === index ? '#2e2420' : '#d9cdbf' }}
               transition={spring.snappy}
               className="block h-[9px] rounded-full"
             />
