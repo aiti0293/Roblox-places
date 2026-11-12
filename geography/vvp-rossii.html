@@ -1,0 +1,196 @@
+<title>Что влияет на ВВП России</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=PT+Serif:wght@400;700&family=PT+Sans:wght@400;700&display=swap">
+<style>
+/* Layout: one reading column like a school project, numbered plan sections, charts in framed "figures" */
+:root{
+  --bg:#f6f7f5; --paper:#ffffff; --fg:#1d2522; --muted:#5b6762; --line:#d9dfdc;
+  --accent:#1f6f5c; --c2:#c4862b; --c3:#7a5aa6; --neg:#b9473a; --grid:#e6ebe8;
+  --display:"PT Serif",Georgia,serif; --body:"PT Sans","Segoe UI",Arial,sans-serif;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#141a18; --paper:#1c2421; --fg:#e7ece9; --muted:#9aa8a2; --line:#34403b;
+  --accent:#4fb79b; --c2:#e0a54f; --c3:#a88bd4; --neg:#e07a6b; --grid:#2a3430; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#141a18; --paper:#1c2421; --fg:#e7ece9; --muted:#9aa8a2; --line:#34403b;
+  --accent:#4fb79b; --c2:#e0a54f; --c3:#a88bd4; --neg:#e07a6b; --grid:#2a3430; color-scheme:dark}
+body{background:var(--bg);color:var(--fg);font:17px/1.6 var(--body);
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:32px 64px}
+main{max-width:760px;margin:0 auto;display:flex;flex-direction:column;gap:36px}
+header{border-bottom:2px solid var(--accent);padding-bottom:20px}
+.eyebrow{font-size:13px;letter-spacing:.08em;text-transform:uppercase;color:var(--accent);font-weight:700}
+h1{font:700 clamp(30px,6vw,44px)/1.15 var(--display);margin:6px 0 10px;text-wrap:balance}
+h2{font:700 26px/1.25 var(--display);margin:0 0 12px;text-wrap:balance;display:flex;gap:12px;align-items:baseline}
+h2 .n{color:var(--accent);font-size:20px}
+h3{font:700 18px/1.3 var(--body);margin:0 0 4px}
+p{margin:0 0 12px;max-width:68ch}
+.meta{color:var(--muted);font-size:15px}
+.plan{background:var(--paper);border:1px solid var(--line);border-radius:6px;padding:16px 20px}
+.plan ol{margin:6px 0 0;padding-left:22px}
+.def{border-left:4px solid var(--accent);background:var(--paper);padding:14px 18px;font-size:18px}
+.factors{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px}
+.factor{background:var(--paper);border:1px solid var(--line);border-radius:6px;padding:14px 16px;display:flex;gap:12px;min-width:0}
+.factor svg{flex:none;width:44px;height:44px}
+.factor p{font-size:15px;margin:0}
+figure{margin:0;background:var(--paper);border:1px solid var(--line);border-radius:6px;padding:16px}
+figcaption{font-size:15px;color:var(--muted);margin-top:8px}
+figcaption b{color:var(--fg)}
+.chart{overflow-x:auto}
+.chart svg{width:100%;min-width:480px;height:auto;display:block}
+svg text{fill:var(--fg);font-family:var(--body)}
+svg .m{fill:var(--muted)}
+.tab{font-variant-numeric:tabular-nums}
+ul.list{margin:0;padding-left:22px}
+ul.list li{margin-bottom:6px}
+.conclusion{background:var(--paper);border:1px solid var(--line);border-radius:6px;padding:18px 20px}
+.src{font-size:14px;color:var(--muted)}
+</style>
+
+<main>
+<header>
+  <div class="eyebrow">Проект по географии · 9 класс</div>
+  <h1>Что влияет на ВВП России</h1>
+  <p class="meta">Тема: экономика России и факторы, от которых зависит валовой внутренний продукт страны.</p>
+</header>
+
+<section class="plan">
+  <h3>План проекта</h3>
+  <ol>
+    <li>Введение</li>
+    <li>Определение ВВП</li>
+    <li>Что влияет на ВВП: примеры</li>
+    <li>Диаграммы и статистика</li>
+    <li>Анализ диаграмм</li>
+    <li>Заключение и вывод</li>
+  </ol>
+</section>
+
+<section>
+  <h2><span class="n">1.</span>Введение</h2>
+  <p>Россия — самая большая по площади страна мира. У неё огромные запасы нефти, газа, угля, металлов, леса и пресной воды. Но размер территории и богатство недр сами по себе не делают страну богатой. Чтобы понять, насколько сильна экономика, учёные используют показатель ВВП.</p>
+  <p><b>Актуальность:</b> за последние годы ВВП России то падал, то быстро рос. Важно понять, какие географические и экономические причины на это влияют.</p>
+  <p><b>Цель:</b> выяснить, какие факторы влияют на ВВП России.<br>
+  <b>Задачи:</b> дать определение ВВП; привести примеры факторов; построить диаграммы по данным Росстата; проанализировать их и сделать вывод.</p>
+</section>
+
+<section>
+  <h2><span class="n">2.</span>Определение ВВП</h2>
+  <p class="def"><b>ВВП (валовой внутренний продукт)</b> — это общая стоимость всех конечных товаров и услуг, произведённых на территории страны за один год, в рыночных ценах.</p>
+  <p>ВВП бывает <b>номинальный</b> (в ценах текущего года, в рублях) и <b>реальный</b> (без учёта роста цен). Реальный рост ВВП показывает, стала ли экономика на самом деле производить больше. ВВП России считает <b>Росстат</b>.</p>
+</section>
+
+<section>
+  <h2><span class="n">3.</span>Что влияет на ВВП: примеры</h2>
+  <div class="factors">
+    <div class="factor">
+      <svg viewBox="0 0 44 44" aria-hidden="true"><rect x="16" y="6" width="12" height="30" rx="2" fill="var(--c2)"/><rect x="10" y="34" width="24" height="5" fill="var(--fg)"/><path d="M22 6 L22 2" stroke="var(--fg)" stroke-width="2"/></svg>
+      <div><h3>Природные ресурсы</h3><p>Нефть, газ, уголь, металлы. Добыча полезных ископаемых даёт около 13–14% ВВП. Пример: Западная Сибирь — главный район добычи нефти и газа.</p></div>
+    </div>
+    <div class="factor">
+      <svg viewBox="0 0 44 44" aria-hidden="true"><path d="M4 36 C14 24 20 30 26 18 S38 10 40 6" fill="none" stroke="var(--neg)" stroke-width="3"/><circle cx="40" cy="6" r="3" fill="var(--neg)"/></svg>
+      <div><h3>Мировые цены</h3><p>Когда нефть дорожает, Россия получает больше денег за экспорт. В 2020 году цены упали — ВВП тоже снизился.</p></div>
+    </div>
+    <div class="factor">
+      <svg viewBox="0 0 44 44" aria-hidden="true"><rect x="6" y="18" width="10" height="20" fill="var(--accent)"/><rect x="18" y="10" width="10" height="28" fill="var(--accent)"/><rect x="30" y="22" width="8" height="16" fill="var(--accent)"/><rect x="21" y="4" width="4" height="6" fill="var(--muted)"/></svg>
+      <div><h3>Промышленность</h3><p>Обрабатывающие производства — крупнейшая отрасль (около 15% ВВП): машиностроение, металлургия, химия.</p></div>
+    </div>
+    <div class="factor">
+      <svg viewBox="0 0 44 44" aria-hidden="true"><circle cx="15" cy="14" r="6" fill="var(--c3)"/><circle cx="30" cy="14" r="6" fill="var(--c3)"/><path d="M4 38 C4 26 26 26 26 38 Z M19 38 C19 26 41 26 41 38 Z" fill="var(--c3)"/></svg>
+      <div><h3>Население и труд</h3><p>Около 146 млн человек. Сейчас в стране нехватка работников, и это сдерживает рост ВВП.</p></div>
+    </div>
+    <div class="factor">
+      <svg viewBox="0 0 44 44" aria-hidden="true"><path d="M2 32 H42" stroke="var(--fg)" stroke-width="2"/><path d="M2 38 H42" stroke="var(--fg)" stroke-width="2"/><g stroke="var(--muted)" stroke-width="2"><path d="M8 32 V38"/><path d="M18 32 V38"/><path d="M28 32 V38"/><path d="M38 32 V38"/></g><rect x="8" y="16" width="22" height="12" rx="2" fill="var(--c2)"/><circle cx="13" cy="30" r="2" fill="var(--fg)"/><circle cx="25" cy="30" r="2" fill="var(--fg)"/></svg>
+      <div><h3>Транспорт и территория</h3><p>Большие расстояния и суровый климат делают перевозки дорогими. Новые дороги и порты помогают торговле.</p></div>
+    </div>
+    <div class="factor">
+      <svg viewBox="0 0 44 44" aria-hidden="true"><circle cx="22" cy="22" r="16" fill="none" stroke="var(--accent)" stroke-width="3"/><path d="M6 22 H38 M22 6 C14 14 14 30 22 38 C30 30 30 14 22 6" fill="none" stroke="var(--accent)" stroke-width="2"/></svg>
+      <div><h3>Санкции и торговля</h3><p>Ограничения 2022 года изменили рынки сбыта: экспорт переориентировался в Азию (Китай, Индия).</p></div>
+    </div>
+    <div class="factor">
+      <svg viewBox="0 0 44 44" aria-hidden="true"><rect x="6" y="14" width="32" height="24" fill="none" stroke="var(--fg)" stroke-width="2"/><path d="M4 14 L22 4 L40 14" fill="none" stroke="var(--fg)" stroke-width="2"/><g fill="var(--muted)"><rect x="11" y="18" width="4" height="16"/><rect x="20" y="18" width="4" height="16"/><rect x="29" y="18" width="4" height="16"/></g></svg>
+      <div><h3>Государство</h3><p>Госзаказы, оборонные расходы, ключевая ставка Центробанка. Высокая ставка делает кредиты дорогими и замедляет рост.</p></div>
+    </div>
+    <div class="factor">
+      <svg viewBox="0 0 44 44" aria-hidden="true"><path d="M22 40 V18" stroke="var(--accent)" stroke-width="3"/><path d="M22 24 C12 24 8 16 8 10 C16 10 22 16 22 24 Z M22 20 C30 20 36 14 36 6 C28 6 22 12 22 20 Z" fill="var(--accent)"/></svg>
+      <div><h3>Сельское хозяйство</h3><p>Россия — крупнейший экспортёр пшеницы в мире. Урожай зависит от погоды и климата в Черноземье, на Юге и в Поволжье.</p></div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <h2><span class="n">4.</span>Диаграммы</h2>
+  <div style="display:flex;flex-direction:column;gap:20px">
+    <figure>
+      <div class="chart"><svg id="ch1" viewBox="0 0 640 320" role="img" aria-label="Номинальный ВВП России 2019–2024"></svg></div>
+      <figcaption><b>Рисунок 1.</b> Номинальный ВВП России, трлн рублей (Росстат, округлено).</figcaption>
+    </figure>
+    <figure>
+      <div class="chart"><svg id="ch2" viewBox="0 0 640 320" role="img" aria-label="Реальный рост ВВП России по годам"></svg></div>
+      <figcaption><b>Рисунок 2.</b> Реальный рост ВВП России к предыдущему году, % (Росстат; 2025 — оценка).</figcaption>
+    </figure>
+    <figure>
+      <div class="chart"><svg id="ch3" viewBox="0 0 640 340" role="img" aria-label="Структура ВВП России по отраслям"></svg></div>
+      <figcaption><b>Рисунок 3.</b> Структура ВВП России по отраслям (валовая добавленная стоимость), примерные доли, %.</figcaption>
+    </figure>
+  </div>
+</section>
+
+<section>
+  <h2><span class="n">5.</span>Анализ диаграмм</h2>
+  <ul class="list">
+    <li><b>Рисунок 1.</b> В рублях ВВП вырос почти в 2 раза: с 110 трлн в 2019 году до примерно 200 трлн в 2024 году. Но часть роста объясняется инфляцией (ростом цен), а не только ростом производства.</li>
+    <li><b>Рисунок 2.</b> Реальный ВВП падал в 2020 году (−2,7%) из-за пандемии и падения цен на нефть и в 2022 году (−1,2%) из-за санкций. В 2021, 2023 и 2024 годах был быстрый рост (3,6–5,9%) благодаря восстановлению спроса, госрасходам и переориентации экспорта. В 2025 году рост замедлился примерно до 1% из-за высокой ключевой ставки и нехватки работников.</li>
+    <li><b>Рисунок 3.</b> Самые большие доли у обрабатывающей промышленности, торговли и добычи полезных ископаемых. Значит, ВВП России сильно зависит от природных ресурсов и от того, как их перерабатывают и продают.</li>
+  </ul>
+</section>
+
+<section class="conclusion">
+  <h2><span class="n">6.</span>Заключение и вывод</h2>
+  <p>В ходе проекта я узнал(а), что такое ВВП, и рассмотрел(а) факторы, которые на него влияют. По диаграммам видно, что экономика России растёт, но рост неровный: годы спада сменяются годами подъёма.</p>
+  <p><b>Вывод:</b> на ВВП России сильнее всего влияют <b>природные ресурсы и мировые цены на нефть и газ</b>, а также <b>промышленность, население (рабочая сила), транспорт, санкции и решения государства</b>. Чтобы ВВП рос стабильно, России важно меньше зависеть от сырья: развивать переработку, технологии, транспорт и обучать специалистов.</p>
+</section>
+
+<p class="src">Источники: Росстат (rosstat.gov.ru) — данные о ВВП; учебник «География России. Хозяйство и географические районы», 9 класс. Значения округлены.</p>
+</main>
+
+<script>
+(function(){
+  var NS="http://www.w3.org/2000/svg";
+  function el(svg,tag,a,txt){var e=document.createElementNS(NS,tag);for(var k in a)e.setAttribute(k,a[k]);if(txt!=null)e.textContent=txt;svg.appendChild(e);return e;}
+  function fmt(v){return String(v).replace(".",",");}
+
+  // Рисунок 1: номинальный ВВП
+  var d1=[["2019",109.6],["2020",107.7],["2021",135.8],["2022",155.4],["2023",172.1],["2024",201.2]];
+  var s=document.getElementById("ch1"),L=56,R=620,T=30,B=280,max=250;
+  function y1(v){return B-(v/max)*(B-T);}
+  for(var t=0;t<=max;t+=50){el(s,"line",{x1:L,x2:R,y1:y1(t),y2:y1(t),stroke:"var(--grid)"});el(s,"text",{x:L-8,y:y1(t)+4,"text-anchor":"end","font-size":13,class:"m tab"},t);}
+  var bw=(R-L)/d1.length;
+  d1.forEach(function(d,i){var x=L+i*bw+bw*0.2,w=bw*0.6;
+    el(s,"rect",{x:x,y:y1(d[1]),width:w,height:B-y1(d[1]),fill:i==d1.length-1?"var(--accent)":"var(--c2)",rx:2});
+    el(s,"text",{x:x+w/2,y:y1(d[1])-8,"text-anchor":"middle","font-size":14,"font-weight":700,class:"tab"},fmt(d[1]));
+    el(s,"text",{x:x+w/2,y:B+22,"text-anchor":"middle","font-size":14,class:"tab"},d[0]);});
+  el(s,"line",{x1:L,x2:R,y1:B,y2:B,stroke:"var(--muted)"});
+  el(s,"text",{x:L,y:16,"font-size":13,class:"m"},"трлн руб.");
+
+  // Рисунок 2: реальный рост
+  var d2=[["2019",2.2],["2020",-2.7],["2021",5.9],["2022",-1.2],["2023",3.6],["2024",4.3],["2025*",1.0]];
+  s=document.getElementById("ch2");T=30;B=280;var mn=-4,mx=7;
+  function y2(v){return T+(mx-v)/(mx-mn)*(B-T);}
+  for(var g=mn;g<=mx;g+=2){if(g>mx)break;}
+  [-4,-2,0,2,4,6].forEach(function(g){el(s,"line",{x1:L,x2:R,y1:y2(g),y2:y2(g),stroke:g==0?"var(--muted)":"var(--grid)"});el(s,"text",{x:L-8,y:y2(g)+4,"text-anchor":"end","font-size":13,class:"m tab"},(g>0?"+":"")+g);});
+  bw=(R-L)/d2.length;
+  d2.forEach(function(d,i){var x=L+i*bw+bw*0.2,w=bw*0.6,v=d[1],top=Math.min(y2(v),y2(0)),h=Math.abs(y2(v)-y2(0));
+    el(s,"rect",{x:x,y:top,width:w,height:h,fill:v<0?"var(--neg)":"var(--accent)",rx:2});
+    el(s,"text",{x:x+w/2,y:v<0?y2(v)+18:y2(v)-8,"text-anchor":"middle","font-size":14,"font-weight":700,class:"tab"},(v>0?"+":"")+fmt(v));
+    el(s,"text",{x:x+w/2,y:B+22,"text-anchor":"middle","font-size":14,class:"tab"},d[0]);});
+  el(s,"text",{x:L,y:16,"font-size":13,class:"m"},"% к предыдущему году");
+
+  // Рисунок 3: структура
+  var d3=[["Обрабатывающие производства",15],["Торговля",13],["Добыча полезных ископаемых",13],["Операции с недвижимостью",9],["Госуправление и оборона",7],["Транспорт и хранение",7],["Финансы и страхование",5],["Строительство",5],["Сельское хозяйство",4],["Прочие отрасли",22]];
+  s=document.getElementById("ch3");var LX=250,RX=590,rowH=31,top0=12;
+  d3.forEach(function(d,i){var yy=top0+i*rowH,w=(d[1]/25)*(RX-LX);
+    el(s,"text",{x:LX-10,y:yy+19,"text-anchor":"end","font-size":14},d[0]);
+    el(s,"rect",{x:LX,y:yy+4,width:w,height:21,fill:i==2?"var(--c2)":(i==9?"var(--muted)":"var(--accent)"),rx:2,opacity:i==9?0.6:1});
+    el(s,"text",{x:LX+w+8,y:yy+19,"font-size":14,"font-weight":700,class:"tab"},d[1]+"%");});
+})();
+</script>
