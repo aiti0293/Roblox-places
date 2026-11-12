@@ -2,195 +2,364 @@
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=PT+Serif:wght@400;700&family=PT+Sans:wght@400;700&display=swap">
 <style>
-/* Layout: one reading column like a school project, numbered plan sections, charts in framed "figures" */
+/* Layout: full-screen slides on white, one idea per slide, elements rise in with a stagger, bars grow. Deliberately single light theme. */
 :root{
-  --bg:#f6f7f5; --paper:#ffffff; --fg:#1d2522; --muted:#5b6762; --line:#d9dfdc;
-  --accent:#1f6f5c; --c2:#c4862b; --c3:#7a5aa6; --neg:#b9473a; --grid:#e6ebe8;
+  --bg:#ffffff; --fg:#17201d; --muted:#66736e; --line:#e3e8e5; --soft:#f3f7f5;
+  --accent:#1f7a63; --c2:#d0902f; --c3:#7b5cb0; --neg:#c4493b; --grid:#edf1ef;
   --display:"PT Serif",Georgia,serif; --body:"PT Sans","Segoe UI",Arial,sans-serif;
+  color-scheme:light;
 }
-@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
-  --bg:#141a18; --paper:#1c2421; --fg:#e7ece9; --muted:#9aa8a2; --line:#34403b;
-  --accent:#4fb79b; --c2:#e0a54f; --c3:#a88bd4; --neg:#e07a6b; --grid:#2a3430; color-scheme:dark}}
-:root[data-theme="dark"]{
-  --bg:#141a18; --paper:#1c2421; --fg:#e7ece9; --muted:#9aa8a2; --line:#34403b;
-  --accent:#4fb79b; --c2:#e0a54f; --c3:#a88bd4; --neg:#e07a6b; --grid:#2a3430; color-scheme:dark}
-body{background:var(--bg);color:var(--fg);font:17px/1.6 var(--body);
-  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:32px 64px}
-main{max-width:760px;margin:0 auto;display:flex;flex-direction:column;gap:36px}
-header{border-bottom:2px solid var(--accent);padding-bottom:20px}
-.eyebrow{font-size:13px;letter-spacing:.08em;text-transform:uppercase;color:var(--accent);font-weight:700}
-h1{font:700 clamp(30px,6vw,44px)/1.15 var(--display);margin:6px 0 10px;text-wrap:balance}
-h2{font:700 26px/1.25 var(--display);margin:0 0 12px;text-wrap:balance;display:flex;gap:12px;align-items:baseline}
-h2 .n{color:var(--accent);font-size:20px}
-h3{font:700 18px/1.3 var(--body);margin:0 0 4px}
-p{margin:0 0 12px;max-width:68ch}
-.meta{color:var(--muted);font-size:15px}
-.plan{background:var(--paper);border:1px solid var(--line);border-radius:6px;padding:16px 20px}
-.plan ol{margin:6px 0 0;padding-left:22px}
-.def{border-left:4px solid var(--accent);background:var(--paper);padding:14px 18px;font-size:18px}
-.factors{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px}
-.factor{background:var(--paper);border:1px solid var(--line);border-radius:6px;padding:14px 16px;display:flex;gap:12px;min-width:0}
-.factor svg{flex:none;width:44px;height:44px}
-.factor p{font-size:15px;margin:0}
-figure{margin:0;background:var(--paper);border:1px solid var(--line);border-radius:6px;padding:16px}
-figcaption{font-size:15px;color:var(--muted);margin-top:8px}
-figcaption b{color:var(--fg)}
-.chart{overflow-x:auto}
-.chart svg{width:100%;min-width:480px;height:auto;display:block}
-svg text{fill:var(--fg);font-family:var(--body)}
+html,body{height:100%}
+body{background:var(--bg);color:var(--fg);font-family:var(--body);overflow:hidden}
+.deck{position:relative;height:100%;width:100%}
+.slide{position:absolute;inset:0;display:flex;flex-direction:column;justify-content:center;
+  padding-left:max(24px,env(safe-area-inset-left,0px),6vw);padding-right:max(24px,env(safe-area-inset-right,0px),6vw);
+  padding-block:5vh 12vh;overflow-y:auto;
+  opacity:0;visibility:hidden;transform:translateX(6vw) scale(.98);
+  transition:opacity .8s cubic-bezier(.22,.8,.24,1),transform .8s cubic-bezier(.22,.8,.24,1),visibility 0s .8s}
+.slide.prev{transform:translateX(-6vw) scale(.98)}
+.slide.active{opacity:1;visibility:visible;transform:none;transition:opacity .8s cubic-bezier(.22,.8,.24,1),transform .8s cubic-bezier(.22,.8,.24,1),visibility 0s}
+.inner{max-width:1200px;width:100%;margin:0 auto}
+
+.rise{opacity:0;transform:translateY(28px);transition:opacity .9s ease,transform .9s cubic-bezier(.22,.8,.24,1);transition-delay:calc(var(--i,0) * 140ms + 250ms)}
+.active .rise{opacity:1;transform:none}
+
+.tag{font-size:clamp(14px,1.6vw,20px);letter-spacing:.1em;text-transform:uppercase;color:var(--accent);font-weight:700;margin-bottom:1.2vh}
+h1{font:700 clamp(40px,7vw,96px)/1.05 var(--display);margin:0 0 3vh;text-wrap:balance}
+h2{font:700 clamp(32px,4.6vw,62px)/1.1 var(--display);margin:0 0 4vh;text-wrap:balance}
+p,li{font-size:clamp(19px,2.2vw,30px);line-height:1.45}
+p{margin:0 0 2vh;max-width:40ch}
+.wide p{max-width:52ch}
+.lead{color:var(--muted)}
+.big-line{width:min(220px,30vw);height:6px;background:var(--accent);border-radius:3px;margin:3vh 0;transform-origin:left;transform:scaleX(0);transition:transform 1.2s cubic-bezier(.22,.8,.24,1) .5s}
+.active .big-line{transform:scaleX(1)}
+
+ol.plan{list-style:none;padding:0;margin:0;display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,320px),1fr));gap:2.4vh 4vw}
+ol.plan li{display:flex;gap:18px;align-items:baseline}
+ol.plan b{font:700 clamp(28px,3.4vw,48px)/1 var(--display);color:var(--accent);min-width:1.4em}
+
+.def{font-size:clamp(24px,3vw,42px);line-height:1.35;border-left:8px solid var(--accent);padding:1vh 0 1vh 3vw;max-width:30ch;margin-bottom:4vh}
+.pair{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,340px),1fr));gap:3vw}
+.pair div{background:var(--soft);border-radius:14px;padding:3vh 2.4vw}
+.pair h3{font:700 clamp(22px,2.4vw,32px)/1.2 var(--display);margin:0 0 1vh;color:var(--accent)}
+.pair p{font-size:clamp(17px,1.8vw,24px);margin:0}
+
+.factors{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,420px),1fr));gap:3.5vh 4vw}
+.factor{display:flex;gap:22px;align-items:flex-start;min-width:0}
+.factor svg{flex:none;width:clamp(56px,6vw,84px);height:auto}
+.factor h3{font:700 clamp(22px,2.4vw,34px)/1.2 var(--display);margin:0 0 .6vh}
+.factor p{font-size:clamp(17px,1.75vw,24px);margin:0;max-width:none}
+
+.chart svg{width:100%;height:auto;max-height:62vh;display:block}
+svg text{font-family:var(--body);fill:var(--fg)}
 svg .m{fill:var(--muted)}
-.tab{font-variant-numeric:tabular-nums}
-ul.list{margin:0;padding-left:22px}
-ul.list li{margin-bottom:6px}
-.conclusion{background:var(--paper);border:1px solid var(--line);border-radius:6px;padding:18px 20px}
-.src{font-size:14px;color:var(--muted)}
+.cap{font-size:clamp(15px,1.5vw,20px);color:var(--muted);margin-top:1.5vh;max-width:none}
+.bar{transform-box:fill-box;transform-origin:50% 100%;transform:scaleY(0);transition:transform 1.1s cubic-bezier(.22,.8,.24,1);transition-delay:calc(var(--i) * 120ms + 400ms)}
+.bar.down{transform-origin:50% 0}
+.bar.h{transform-origin:0 50%;transform:scaleX(0)}
+.active .bar{transform:none}
+.val{opacity:0;transition:opacity .6s ease;transition-delay:calc(var(--i) * 120ms + 1100ms)}
+.active .val{opacity:1}
+
+ul.points{list-style:none;padding:0;margin:0;display:flex;flex-direction:column;gap:3vh}
+ul.points li{display:flex;gap:20px;font-size:clamp(18px,2vw,27px)}
+ul.points .dot{flex:none;width:clamp(44px,4vw,58px);height:clamp(44px,4vw,58px);border-radius:50%;background:var(--accent);color:#fff;display:grid;place-items:center;font:700 clamp(18px,1.8vw,24px) var(--display)}
+.verdict{background:var(--soft);border-radius:16px;padding:3vh 3vw;font-size:clamp(20px,2.4vw,32px);line-height:1.4;max-width:none}
+.verdict b{color:var(--accent)}
+
+/* Final slide */
+.thanks{align-items:center;text-align:center}
+.thanks .inner{position:relative;z-index:1}
+#confetti{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
+.thx{font:700 clamp(44px,9vw,140px)/1.1 var(--display);margin:0;position:relative;color:var(--fg)}
+.thx span{display:inline-block;opacity:0;transform:translateY(-60px) rotate(-8deg)}
+.active .thx span{animation:drop .9s cubic-bezier(.3,1.6,.5,1) forwards;animation-delay:calc(var(--i) * 70ms + 300ms)}
+.active .thx span.wave{animation:drop .9s cubic-bezier(.3,1.6,.5,1) forwards, wave 3s ease-in-out infinite;animation-delay:calc(var(--i) * 70ms + 300ms), calc(var(--i) * 90ms + 2.4s)}
+.thx .acc{color:var(--accent)}
+@keyframes drop{to{opacity:1;transform:none}}
+@keyframes wave{0%,100%{transform:none}50%{transform:translateY(-14px)}}
+.thanks .sub{position:relative;color:var(--muted);margin:3vh auto 0;max-width:none}
+
+/* Controls */
+.progress{position:fixed;left:0;top:env(safe-area-inset-top,0px);height:5px;background:var(--accent);width:0;transition:width .8s cubic-bezier(.22,.8,.24,1);z-index:5}
+.nav{position:fixed;right:max(20px,env(safe-area-inset-right,0px));bottom:max(20px,env(safe-area-inset-bottom,0px));display:flex;gap:12px;align-items:center;z-index:5}
+.nav button{width:56px;height:56px;border-radius:50%;border:2px solid var(--line);background:var(--bg);color:var(--fg);font-size:24px;cursor:pointer;transition:border-color .2s,background .2s}
+.nav button:hover{border-color:var(--accent);background:var(--soft)}
+.nav button:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.nav button:disabled{opacity:.35;cursor:default}
+.count{font-size:18px;color:var(--muted);font-variant-numeric:tabular-nums;min-width:4.5em;text-align:center}
+.hint{position:fixed;left:max(20px,env(safe-area-inset-left,0px));bottom:max(28px,env(safe-area-inset-bottom,0px));font-size:15px;color:var(--muted);z-index:5}
+@media (max-width:640px){.hint{display:none}.nav button{width:48px;height:48px}}
+@media (prefers-reduced-motion:reduce){
+  .slide,.rise,.bar,.val,.big-line{transition:none!important}
+  .active .thx span{animation:none;opacity:1;transform:none}
+}
 </style>
 
-<main>
-<header>
-  <div class="eyebrow">Проект по географии · 9 класс</div>
-  <h1>Что влияет на ВВП России</h1>
-  <p class="meta">Тема: экономика России и факторы, от которых зависит валовой внутренний продукт страны.</p>
-</header>
+<div class="progress" id="progress"></div>
+<div class="deck" id="deck">
 
-<section class="plan">
-  <h3>План проекта</h3>
-  <ol>
-    <li>Введение</li>
-    <li>Определение ВВП</li>
-    <li>Что влияет на ВВП: примеры</li>
-    <li>Диаграммы и статистика</li>
-    <li>Анализ диаграмм</li>
-    <li>Заключение и вывод</li>
-  </ol>
+<section class="slide active">
+  <div class="inner">
+    <div class="tag rise" style="--i:0">Проект по географии</div>
+    <h1 class="rise" style="--i:1">Что влияет на ВВП России</h1>
+    <div class="big-line"></div>
+    <p class="lead rise" style="--i:3">Экономика России: факторы, от которых зависит валовой внутренний продукт страны</p>
+  </div>
 </section>
 
-<section>
-  <h2><span class="n">1.</span>Введение</h2>
-  <p>Россия — самая большая по площади страна мира. У неё огромные запасы нефти, газа, угля, металлов, леса и пресной воды. Но размер территории и богатство недр сами по себе не делают страну богатой. Чтобы понять, насколько сильна экономика, учёные используют показатель ВВП.</p>
-  <p><b>Актуальность:</b> за последние годы ВВП России то падал, то быстро рос. Важно понять, какие географические и экономические причины на это влияют.</p>
-  <p><b>Цель:</b> выяснить, какие факторы влияют на ВВП России.<br>
-  <b>Задачи:</b> дать определение ВВП; привести примеры факторов; построить диаграммы по данным Росстата; проанализировать их и сделать вывод.</p>
+<section class="slide">
+  <div class="inner">
+    <div class="tag rise" style="--i:0">Содержание</div>
+    <h2 class="rise" style="--i:1">План проекта</h2>
+    <ol class="plan">
+      <li class="rise" style="--i:2"><b>1</b>Введение</li>
+      <li class="rise" style="--i:3"><b>2</b>Определение ВВП</li>
+      <li class="rise" style="--i:4"><b>3</b>Что влияет на ВВП: примеры</li>
+      <li class="rise" style="--i:5"><b>4</b>Диаграммы</li>
+      <li class="rise" style="--i:6"><b>5</b>Анализ диаграмм</li>
+      <li class="rise" style="--i:7"><b>6</b>Заключение и вывод</li>
+    </ol>
+  </div>
 </section>
 
-<section>
-  <h2><span class="n">2.</span>Определение ВВП</h2>
-  <p class="def"><b>ВВП (валовой внутренний продукт)</b> — это общая стоимость всех конечных товаров и услуг, произведённых на территории страны за один год, в рыночных ценах.</p>
-  <p>ВВП бывает <b>номинальный</b> (в ценах текущего года, в рублях) и <b>реальный</b> (без учёта роста цен). Реальный рост ВВП показывает, стала ли экономика на самом деле производить больше. ВВП России считает <b>Росстат</b>.</p>
+<section class="slide">
+  <div class="inner wide">
+    <div class="tag rise" style="--i:0">1 · Введение</div>
+    <h2 class="rise" style="--i:1">Богатая страна или богатая экономика?</h2>
+    <p class="rise" style="--i:2">Россия — самая большая по площади страна мира. У неё огромные запасы нефти, газа, угля, металлов, леса и пресной воды.</p>
+    <p class="rise" style="--i:3">Но богатство недр само по себе не делает страну богатой. Чтобы оценить силу экономики, используют показатель <b>ВВП</b>.</p>
+  </div>
 </section>
 
-<section>
-  <h2><span class="n">3.</span>Что влияет на ВВП: примеры</h2>
-  <div class="factors">
-    <div class="factor">
-      <svg viewBox="0 0 44 44" aria-hidden="true"><rect x="16" y="6" width="12" height="30" rx="2" fill="var(--c2)"/><rect x="10" y="34" width="24" height="5" fill="var(--fg)"/><path d="M22 6 L22 2" stroke="var(--fg)" stroke-width="2"/></svg>
-      <div><h3>Природные ресурсы</h3><p>Нефть, газ, уголь, металлы. Добыча полезных ископаемых даёт около 13–14% ВВП. Пример: Западная Сибирь — главный район добычи нефти и газа.</p></div>
-    </div>
-    <div class="factor">
-      <svg viewBox="0 0 44 44" aria-hidden="true"><path d="M4 36 C14 24 20 30 26 18 S38 10 40 6" fill="none" stroke="var(--neg)" stroke-width="3"/><circle cx="40" cy="6" r="3" fill="var(--neg)"/></svg>
-      <div><h3>Мировые цены</h3><p>Когда нефть дорожает, Россия получает больше денег за экспорт. В 2020 году цены упали — ВВП тоже снизился.</p></div>
-    </div>
-    <div class="factor">
-      <svg viewBox="0 0 44 44" aria-hidden="true"><rect x="6" y="18" width="10" height="20" fill="var(--accent)"/><rect x="18" y="10" width="10" height="28" fill="var(--accent)"/><rect x="30" y="22" width="8" height="16" fill="var(--accent)"/><rect x="21" y="4" width="4" height="6" fill="var(--muted)"/></svg>
-      <div><h3>Промышленность</h3><p>Обрабатывающие производства — крупнейшая отрасль (около 15% ВВП): машиностроение, металлургия, химия.</p></div>
-    </div>
-    <div class="factor">
-      <svg viewBox="0 0 44 44" aria-hidden="true"><circle cx="15" cy="14" r="6" fill="var(--c3)"/><circle cx="30" cy="14" r="6" fill="var(--c3)"/><path d="M4 38 C4 26 26 26 26 38 Z M19 38 C19 26 41 26 41 38 Z" fill="var(--c3)"/></svg>
-      <div><h3>Население и труд</h3><p>Около 146 млн человек. Сейчас в стране нехватка работников, и это сдерживает рост ВВП.</p></div>
-    </div>
-    <div class="factor">
-      <svg viewBox="0 0 44 44" aria-hidden="true"><path d="M2 32 H42" stroke="var(--fg)" stroke-width="2"/><path d="M2 38 H42" stroke="var(--fg)" stroke-width="2"/><g stroke="var(--muted)" stroke-width="2"><path d="M8 32 V38"/><path d="M18 32 V38"/><path d="M28 32 V38"/><path d="M38 32 V38"/></g><rect x="8" y="16" width="22" height="12" rx="2" fill="var(--c2)"/><circle cx="13" cy="30" r="2" fill="var(--fg)"/><circle cx="25" cy="30" r="2" fill="var(--fg)"/></svg>
-      <div><h3>Транспорт и территория</h3><p>Большие расстояния и суровый климат делают перевозки дорогими. Новые дороги и порты помогают торговле.</p></div>
-    </div>
-    <div class="factor">
-      <svg viewBox="0 0 44 44" aria-hidden="true"><circle cx="22" cy="22" r="16" fill="none" stroke="var(--accent)" stroke-width="3"/><path d="M6 22 H38 M22 6 C14 14 14 30 22 38 C30 30 30 14 22 6" fill="none" stroke="var(--accent)" stroke-width="2"/></svg>
-      <div><h3>Санкции и торговля</h3><p>Ограничения 2022 года изменили рынки сбыта: экспорт переориентировался в Азию (Китай, Индия).</p></div>
-    </div>
-    <div class="factor">
-      <svg viewBox="0 0 44 44" aria-hidden="true"><rect x="6" y="14" width="32" height="24" fill="none" stroke="var(--fg)" stroke-width="2"/><path d="M4 14 L22 4 L40 14" fill="none" stroke="var(--fg)" stroke-width="2"/><g fill="var(--muted)"><rect x="11" y="18" width="4" height="16"/><rect x="20" y="18" width="4" height="16"/><rect x="29" y="18" width="4" height="16"/></g></svg>
-      <div><h3>Государство</h3><p>Госзаказы, оборонные расходы, ключевая ставка Центробанка. Высокая ставка делает кредиты дорогими и замедляет рост.</p></div>
-    </div>
-    <div class="factor">
-      <svg viewBox="0 0 44 44" aria-hidden="true"><path d="M22 40 V18" stroke="var(--accent)" stroke-width="3"/><path d="M22 24 C12 24 8 16 8 10 C16 10 22 16 22 24 Z M22 20 C30 20 36 14 36 6 C28 6 22 12 22 20 Z" fill="var(--accent)"/></svg>
-      <div><h3>Сельское хозяйство</h3><p>Россия — крупнейший экспортёр пшеницы в мире. Урожай зависит от погоды и климата в Черноземье, на Юге и в Поволжье.</p></div>
+<section class="slide">
+  <div class="inner">
+    <div class="tag rise" style="--i:0">1 · Введение</div>
+    <h2 class="rise" style="--i:1">Цель и задачи</h2>
+    <div class="pair">
+      <div class="rise" style="--i:2"><h3>Цель</h3><p>Выяснить, какие факторы влияют на ВВП России.</p></div>
+      <div class="rise" style="--i:3"><h3>Задачи</h3><p>Дать определение ВВП, привести примеры факторов, построить диаграммы по данным Росстата, проанализировать их и сделать вывод.</p></div>
     </div>
   </div>
 </section>
 
-<section>
-  <h2><span class="n">4.</span>Диаграммы</h2>
-  <div style="display:flex;flex-direction:column;gap:20px">
-    <figure>
-      <div class="chart"><svg id="ch1" viewBox="0 0 640 320" role="img" aria-label="Номинальный ВВП России 2019–2024"></svg></div>
-      <figcaption><b>Рисунок 1.</b> Номинальный ВВП России, трлн рублей (Росстат, округлено).</figcaption>
-    </figure>
-    <figure>
-      <div class="chart"><svg id="ch2" viewBox="0 0 640 320" role="img" aria-label="Реальный рост ВВП России по годам"></svg></div>
-      <figcaption><b>Рисунок 2.</b> Реальный рост ВВП России к предыдущему году, % (Росстат; 2025 — оценка).</figcaption>
-    </figure>
-    <figure>
-      <div class="chart"><svg id="ch3" viewBox="0 0 640 340" role="img" aria-label="Структура ВВП России по отраслям"></svg></div>
-      <figcaption><b>Рисунок 3.</b> Структура ВВП России по отраслям (валовая добавленная стоимость), примерные доли, %.</figcaption>
-    </figure>
+<section class="slide">
+  <div class="inner">
+    <div class="tag rise" style="--i:0">2 · Определение</div>
+    <h2 class="rise" style="--i:1">Что такое ВВП</h2>
+    <p class="def rise" style="--i:2"><b>ВВП</b> — это общая стоимость всех конечных товаров и услуг, произведённых в стране за один год.</p>
+    <div class="pair">
+      <div class="rise" style="--i:3"><h3>Номинальный ВВП</h3><p>В ценах текущего года, в рублях. Растёт и от производства, и от роста цен.</p></div>
+      <div class="rise" style="--i:4"><h3>Реальный ВВП</h3><p>Без учёта роста цен. Показывает, стала ли страна производить больше.</p></div>
+    </div>
   </div>
 </section>
 
-<section>
-  <h2><span class="n">5.</span>Анализ диаграмм</h2>
-  <ul class="list">
-    <li><b>Рисунок 1.</b> В рублях ВВП вырос почти в 2 раза: с 110 трлн в 2019 году до примерно 200 трлн в 2024 году. Но часть роста объясняется инфляцией (ростом цен), а не только ростом производства.</li>
-    <li><b>Рисунок 2.</b> Реальный ВВП падал в 2020 году (−2,7%) из-за пандемии и падения цен на нефть и в 2022 году (−1,2%) из-за санкций. В 2021, 2023 и 2024 годах был быстрый рост (3,6–5,9%) благодаря восстановлению спроса, госрасходам и переориентации экспорта. В 2025 году рост замедлился примерно до 1% из-за высокой ключевой ставки и нехватки работников.</li>
-    <li><b>Рисунок 3.</b> Самые большие доли у обрабатывающей промышленности, торговли и добычи полезных ископаемых. Значит, ВВП России сильно зависит от природных ресурсов и от того, как их перерабатывают и продают.</li>
-  </ul>
+<section class="slide">
+  <div class="inner">
+    <div class="tag rise" style="--i:0">3 · Примеры</div>
+    <h2 class="rise" style="--i:1">Что влияет на ВВП</h2>
+    <div class="factors">
+      <div class="factor rise" style="--i:2">
+        <svg viewBox="0 0 44 44" aria-hidden="true"><rect x="16" y="6" width="12" height="30" rx="2" fill="#d0902f"/><rect x="10" y="34" width="24" height="5" fill="#17201d"/></svg>
+        <div><h3>Природные ресурсы</h3><p>Нефть, газ, уголь, металлы: около 13% ВВП. Главный район добычи — Западная Сибирь.</p></div>
+      </div>
+      <div class="factor rise" style="--i:3">
+        <svg viewBox="0 0 44 44" aria-hidden="true"><path d="M4 36 C14 24 20 30 26 18 S38 10 40 6" fill="none" stroke="#c4493b" stroke-width="3"/><circle cx="40" cy="6" r="3" fill="#c4493b"/></svg>
+        <div><h3>Мировые цены</h3><p>Дорогая нефть — больше денег от экспорта. В 2020 году цены упали, и ВВП снизился.</p></div>
+      </div>
+      <div class="factor rise" style="--i:4">
+        <svg viewBox="0 0 44 44" aria-hidden="true"><rect x="6" y="18" width="10" height="20" fill="#1f7a63"/><rect x="18" y="10" width="10" height="28" fill="#1f7a63"/><rect x="30" y="22" width="8" height="16" fill="#1f7a63"/></svg>
+        <div><h3>Промышленность</h3><p>Обрабатывающие производства — крупнейшая отрасль: машиностроение, металлургия, химия.</p></div>
+      </div>
+      <div class="factor rise" style="--i:5">
+        <svg viewBox="0 0 44 44" aria-hidden="true"><circle cx="15" cy="14" r="6" fill="#7b5cb0"/><circle cx="30" cy="14" r="6" fill="#7b5cb0"/><path d="M4 38 C4 26 26 26 26 38 Z M19 38 C19 26 41 26 41 38 Z" fill="#7b5cb0"/></svg>
+        <div><h3>Население и труд</h3><p>Около 146 млн человек. Нехватка работников сдерживает рост.</p></div>
+      </div>
+    </div>
+  </div>
 </section>
 
-<section class="conclusion">
-  <h2><span class="n">6.</span>Заключение и вывод</h2>
-  <p>В ходе проекта я узнал(а), что такое ВВП, и рассмотрел(а) факторы, которые на него влияют. По диаграммам видно, что экономика России растёт, но рост неровный: годы спада сменяются годами подъёма.</p>
-  <p><b>Вывод:</b> на ВВП России сильнее всего влияют <b>природные ресурсы и мировые цены на нефть и газ</b>, а также <b>промышленность, население (рабочая сила), транспорт, санкции и решения государства</b>. Чтобы ВВП рос стабильно, России важно меньше зависеть от сырья: развивать переработку, технологии, транспорт и обучать специалистов.</p>
+<section class="slide">
+  <div class="inner">
+    <div class="tag rise" style="--i:0">3 · Примеры</div>
+    <h2 class="rise" style="--i:1">Что влияет на ВВП</h2>
+    <div class="factors">
+      <div class="factor rise" style="--i:2">
+        <svg viewBox="0 0 44 44" aria-hidden="true"><path d="M2 32 H42 M2 38 H42" stroke="#17201d" stroke-width="2"/><g stroke="#66736e" stroke-width="2"><path d="M8 32 V38 M18 32 V38 M28 32 V38 M38 32 V38"/></g><rect x="8" y="16" width="22" height="12" rx="2" fill="#d0902f"/><circle cx="13" cy="30" r="2" fill="#17201d"/><circle cx="25" cy="30" r="2" fill="#17201d"/></svg>
+        <div><h3>Транспорт и территория</h3><p>Большие расстояния и холодный климат делают перевозки дорогими.</p></div>
+      </div>
+      <div class="factor rise" style="--i:3">
+        <svg viewBox="0 0 44 44" aria-hidden="true"><circle cx="22" cy="22" r="16" fill="none" stroke="#1f7a63" stroke-width="3"/><path d="M6 22 H38 M22 6 C14 14 14 30 22 38 C30 30 30 14 22 6" fill="none" stroke="#1f7a63" stroke-width="2"/></svg>
+        <div><h3>Санкции и торговля</h3><p>После 2022 года экспорт развернулся в Азию: Китай, Индия.</p></div>
+      </div>
+      <div class="factor rise" style="--i:4">
+        <svg viewBox="0 0 44 44" aria-hidden="true"><rect x="6" y="14" width="32" height="24" fill="none" stroke="#17201d" stroke-width="2"/><path d="M4 14 L22 4 L40 14" fill="none" stroke="#17201d" stroke-width="2"/><g fill="#66736e"><rect x="11" y="18" width="4" height="16"/><rect x="20" y="18" width="4" height="16"/><rect x="29" y="18" width="4" height="16"/></g></svg>
+        <div><h3>Государство</h3><p>Госзаказы, расходы бюджета, ключевая ставка ЦБ. Высокая ставка замедляет рост.</p></div>
+      </div>
+      <div class="factor rise" style="--i:5">
+        <svg viewBox="0 0 44 44" aria-hidden="true"><path d="M22 40 V18" stroke="#1f7a63" stroke-width="3"/><path d="M22 24 C12 24 8 16 8 10 C16 10 22 16 22 24 Z M22 20 C30 20 36 14 36 6 C28 6 22 12 22 20 Z" fill="#1f7a63"/></svg>
+        <div><h3>Сельское хозяйство</h3><p>Россия — крупнейший экспортёр пшеницы. Урожай зависит от погоды на Юге и в Черноземье.</p></div>
+      </div>
+    </div>
+  </div>
 </section>
 
-<p class="src">Источники: Росстат (rosstat.gov.ru) — данные о ВВП; учебник «География России. Хозяйство и географические районы», 9 класс. Значения округлены.</p>
-</main>
+<section class="slide">
+  <div class="inner">
+    <div class="tag rise" style="--i:0">4 · Диаграммы · Рисунок 1</div>
+    <h2 class="rise" style="--i:1">ВВП России в рублях</h2>
+    <div class="chart"><svg id="ch1" viewBox="0 0 800 380" role="img" aria-label="Номинальный ВВП России 2019–2024, трлн рублей"></svg></div>
+    <p class="cap">Номинальный ВВП, трлн рублей. Источник: Росстат, значения округлены.</p>
+  </div>
+</section>
+
+<section class="slide">
+  <div class="inner">
+    <div class="tag rise" style="--i:0">4 · Диаграммы · Рисунок 2</div>
+    <h2 class="rise" style="--i:1">Реальный рост ВВП по годам</h2>
+    <div class="chart"><svg id="ch2" viewBox="0 0 800 380" role="img" aria-label="Реальный рост ВВП России, процент к предыдущему году"></svg></div>
+    <p class="cap">Рост к предыдущему году, %. Источник: Росстат; 2025 — оценка.</p>
+  </div>
+</section>
+
+<section class="slide">
+  <div class="inner">
+    <div class="tag rise" style="--i:0">4 · Диаграммы · Рисунок 3</div>
+    <h2 class="rise" style="--i:1">Из чего состоит ВВП</h2>
+    <div class="chart"><svg id="ch3" viewBox="0 0 800 380" role="img" aria-label="Структура ВВП России по отраслям"></svg></div>
+    <p class="cap">Доли отраслей в ВВП, примерно, %.</p>
+  </div>
+</section>
+
+<section class="slide">
+  <div class="inner">
+    <div class="tag rise" style="--i:0">5 · Анализ</div>
+    <h2 class="rise" style="--i:1">Что показывают диаграммы</h2>
+    <ul class="points">
+      <li class="rise" style="--i:2"><span class="dot">1</span><span>В рублях ВВП вырос почти в 2 раза: со 110 до 200 трлн. Часть роста — это инфляция.</span></li>
+      <li class="rise" style="--i:3"><span class="dot">2</span><span>Спады в 2020 (−2,7%) и 2022 (−1,2%) — пандемия, дешёвая нефть и санкции. В 2021, 2023 и 2024 — быстрый рост. В 2025 рост замедлился до ~1%.</span></li>
+      <li class="rise" style="--i:4"><span class="dot">3</span><span>Крупнейшие отрасли — промышленность, торговля и добыча ресурсов. Экономика сильно зависит от сырья.</span></li>
+    </ul>
+  </div>
+</section>
+
+<section class="slide">
+  <div class="inner">
+    <div class="tag rise" style="--i:0">6 · Заключение</div>
+    <h2 class="rise" style="--i:1">Заключение и вывод</h2>
+    <p class="rise" style="--i:2">Экономика России растёт, но неровно: годы спада сменяются годами подъёма.</p>
+    <p class="verdict rise" style="--i:3"><b>Вывод:</b> сильнее всего на ВВП России влияют <b>природные ресурсы и мировые цены на нефть и газ</b>, а также промышленность, рабочая сила, транспорт, санкции и решения государства. Для стабильного роста России важно развивать переработку, технологии и транспорт и меньше зависеть от сырья.</p>
+  </div>
+</section>
+
+<section class="slide thanks" id="last">
+  <canvas id="confetti" aria-hidden="true"></canvas>
+  <div class="inner">
+    <h2 class="thx" id="thx" aria-label="Спасибо за внимание!"></h2>
+    <p class="sub rise" style="--i:14">Источники: Росстат (rosstat.gov.ru), учебник «География России», 9 класс</p>
+  </div>
+</section>
+
+</div>
+
+<div class="hint">← → или пробел — листать</div>
+<div class="nav">
+  <button id="prevBtn" aria-label="Предыдущий слайд">←</button>
+  <span class="count" id="count">1 / 13</span>
+  <button id="nextBtn" aria-label="Следующий слайд">→</button>
+</div>
 
 <script>
 (function(){
   var NS="http://www.w3.org/2000/svg";
-  function el(svg,tag,a,txt){var e=document.createElementNS(NS,tag);for(var k in a)e.setAttribute(k,a[k]);if(txt!=null)e.textContent=txt;svg.appendChild(e);return e;}
+  function el(p,tag,a,txt){var e=document.createElementNS(NS,tag);for(var k in a)e.setAttribute(k,a[k]);if(txt!=null)e.textContent=txt;p.appendChild(e);return e;}
   function fmt(v){return String(v).replace(".",",");}
 
-  // Рисунок 1: номинальный ВВП
+  // Рисунок 1
   var d1=[["2019",109.6],["2020",107.7],["2021",135.8],["2022",155.4],["2023",172.1],["2024",201.2]];
-  var s=document.getElementById("ch1"),L=56,R=620,T=30,B=280,max=250;
+  var s=document.getElementById("ch1"),L=70,R=780,T=40,B=330,max=250;
   function y1(v){return B-(v/max)*(B-T);}
-  for(var t=0;t<=max;t+=50){el(s,"line",{x1:L,x2:R,y1:y1(t),y2:y1(t),stroke:"var(--grid)"});el(s,"text",{x:L-8,y:y1(t)+4,"text-anchor":"end","font-size":13,class:"m tab"},t);}
+  for(var t=0;t<=max;t+=50){el(s,"line",{x1:L,x2:R,y1:y1(t),y2:y1(t),stroke:"#edf1ef","stroke-width":2});el(s,"text",{x:L-12,y:y1(t)+6,"text-anchor":"end","font-size":18,class:"m"},t);}
   var bw=(R-L)/d1.length;
-  d1.forEach(function(d,i){var x=L+i*bw+bw*0.2,w=bw*0.6;
-    el(s,"rect",{x:x,y:y1(d[1]),width:w,height:B-y1(d[1]),fill:i==d1.length-1?"var(--accent)":"var(--c2)",rx:2});
-    el(s,"text",{x:x+w/2,y:y1(d[1])-8,"text-anchor":"middle","font-size":14,"font-weight":700,class:"tab"},fmt(d[1]));
-    el(s,"text",{x:x+w/2,y:B+22,"text-anchor":"middle","font-size":14,class:"tab"},d[0]);});
-  el(s,"line",{x1:L,x2:R,y1:B,y2:B,stroke:"var(--muted)"});
-  el(s,"text",{x:L,y:16,"font-size":13,class:"m"},"трлн руб.");
+  d1.forEach(function(d,i){var x=L+i*bw+bw*.2,w=bw*.6;
+    el(s,"rect",{x:x,y:y1(d[1]),width:w,height:B-y1(d[1]),fill:i==d1.length-1?"#1f7a63":"#d0902f",rx:4,class:"bar",style:"--i:"+i});
+    el(s,"text",{x:x+w/2,y:y1(d[1])-12,"text-anchor":"middle","font-size":22,"font-weight":700,class:"val",style:"--i:"+i},fmt(d[1]));
+    el(s,"text",{x:x+w/2,y:B+32,"text-anchor":"middle","font-size":20},d[0]);});
+  el(s,"line",{x1:L,x2:R,y1:B,y2:B,stroke:"#66736e","stroke-width":2});
+  el(s,"text",{x:L,y:20,"font-size":17,class:"m"},"трлн руб.");
 
-  // Рисунок 2: реальный рост
+  // Рисунок 2
   var d2=[["2019",2.2],["2020",-2.7],["2021",5.9],["2022",-1.2],["2023",3.6],["2024",4.3],["2025*",1.0]];
-  s=document.getElementById("ch2");T=30;B=280;var mn=-4,mx=7;
+  s=document.getElementById("ch2");var mn=-4,mx=7;
   function y2(v){return T+(mx-v)/(mx-mn)*(B-T);}
-  for(var g=mn;g<=mx;g+=2){if(g>mx)break;}
-  [-4,-2,0,2,4,6].forEach(function(g){el(s,"line",{x1:L,x2:R,y1:y2(g),y2:y2(g),stroke:g==0?"var(--muted)":"var(--grid)"});el(s,"text",{x:L-8,y:y2(g)+4,"text-anchor":"end","font-size":13,class:"m tab"},(g>0?"+":"")+g);});
+  [-4,-2,0,2,4,6].forEach(function(g){el(s,"line",{x1:L,x2:R,y1:y2(g),y2:y2(g),stroke:g==0?"#66736e":"#edf1ef","stroke-width":2});el(s,"text",{x:L-12,y:y2(g)+6,"text-anchor":"end","font-size":18,class:"m"},(g>0?"+":"")+g);});
   bw=(R-L)/d2.length;
-  d2.forEach(function(d,i){var x=L+i*bw+bw*0.2,w=bw*0.6,v=d[1],top=Math.min(y2(v),y2(0)),h=Math.abs(y2(v)-y2(0));
-    el(s,"rect",{x:x,y:top,width:w,height:h,fill:v<0?"var(--neg)":"var(--accent)",rx:2});
-    el(s,"text",{x:x+w/2,y:v<0?y2(v)+18:y2(v)-8,"text-anchor":"middle","font-size":14,"font-weight":700,class:"tab"},(v>0?"+":"")+fmt(v));
-    el(s,"text",{x:x+w/2,y:B+22,"text-anchor":"middle","font-size":14,class:"tab"},d[0]);});
-  el(s,"text",{x:L,y:16,"font-size":13,class:"m"},"% к предыдущему году");
+  d2.forEach(function(d,i){var x=L+i*bw+bw*.2,w=bw*.6,v=d[1],top=Math.min(y2(v),y2(0)),h=Math.abs(y2(v)-y2(0));
+    el(s,"rect",{x:x,y:top,width:w,height:h,fill:v<0?"#c4493b":"#1f7a63",rx:4,class:"bar"+(v<0?" down":""),style:"--i:"+i});
+    el(s,"text",{x:x+w/2,y:v<0?y2(v)+26:y2(v)-12,"text-anchor":"middle","font-size":22,"font-weight":700,class:"val",style:"--i:"+i},(v>0?"+":"")+fmt(v));
+    el(s,"text",{x:x+w/2,y:B+32,"text-anchor":"middle","font-size":20},d[0]);});
+  el(s,"text",{x:L,y:20,"font-size":17,class:"m"},"% к предыдущему году");
 
-  // Рисунок 3: структура
+  // Рисунок 3
   var d3=[["Обрабатывающие производства",15],["Торговля",13],["Добыча полезных ископаемых",13],["Операции с недвижимостью",9],["Госуправление и оборона",7],["Транспорт и хранение",7],["Финансы и страхование",5],["Строительство",5],["Сельское хозяйство",4],["Прочие отрасли",22]];
-  s=document.getElementById("ch3");var LX=250,RX=590,rowH=31,top0=12;
-  d3.forEach(function(d,i){var yy=top0+i*rowH,w=(d[1]/25)*(RX-LX);
-    el(s,"text",{x:LX-10,y:yy+19,"text-anchor":"end","font-size":14},d[0]);
-    el(s,"rect",{x:LX,y:yy+4,width:w,height:21,fill:i==2?"var(--c2)":(i==9?"var(--muted)":"var(--accent)"),rx:2,opacity:i==9?0.6:1});
-    el(s,"text",{x:LX+w+8,y:yy+19,"font-size":14,"font-weight":700,class:"tab"},d[1]+"%");});
+  s=document.getElementById("ch3");var LX=320,RX=720,rowH=37;
+  d3.forEach(function(d,i){var yy=4+i*rowH,w=(d[1]/25)*(RX-LX);
+    el(s,"text",{x:LX-14,y:yy+25,"text-anchor":"end","font-size":19},d[0]);
+    el(s,"rect",{x:LX,y:yy+6,width:w,height:26,fill:i==2?"#d0902f":(i==9?"#b9c3bf":"#1f7a63"),rx:4,class:"bar h",style:"--i:"+i});
+    el(s,"text",{x:LX+w+10,y:yy+26,"font-size":20,"font-weight":700,class:"val",style:"--i:"+i},d[1]+"%");});
+
+  // Буквы «Спасибо за внимание!»
+  var thx=document.getElementById("thx"),k=0;
+  ["Спасибо","за","внимание!"].forEach(function(word,wi){
+    var wrap=document.createElement("span");wrap.style.cssText="display:inline-block;white-space:nowrap;opacity:1;transform:none;animation:none";
+    word.split("").forEach(function(ch){var sp=document.createElement("span");sp.textContent=ch;sp.className="wave"+(wi==2?" acc":"");sp.style.setProperty("--i",k++);sp.setAttribute("aria-hidden","true");wrap.appendChild(sp);});
+    thx.appendChild(wrap);
+    if(wi<2)thx.appendChild(document.createTextNode(" "));
+  });
+
+  // Навигация
+  var slides=[].slice.call(document.querySelectorAll(".slide")),cur=0,n=slides.length;
+  var prog=document.getElementById("progress"),cnt=document.getElementById("count"),pb=document.getElementById("prevBtn"),nb=document.getElementById("nextBtn");
+  function go(i){
+    if(i<0||i>=n||i==cur)return;
+    slides.forEach(function(sl,j){sl.classList.toggle("active",j==i);sl.classList.toggle("prev",j<i);});
+    cur=i;update();
+    if(i==n-1)startConfetti();else stopConfetti();
+  }
+  function update(){prog.style.width=((cur+1)/n*100)+"%";cnt.textContent=(cur+1)+" / "+n;pb.disabled=cur==0;nb.disabled=cur==n-1;}
+  pb.onclick=function(){go(cur-1)};nb.onclick=function(){go(cur+1)};
+  document.addEventListener("keydown",function(e){
+    if(["ArrowRight","PageDown"," ","Enter"].indexOf(e.key)>-1){e.preventDefault();go(cur+1);}
+    else if(["ArrowLeft","PageUp","Backspace"].indexOf(e.key)>-1){e.preventDefault();go(cur-1);}
+    else if(e.key=="Home")go(0);else if(e.key=="End")go(n-1);
+  });
+  var sx=null,sy=null;
+  document.addEventListener("touchstart",function(e){sx=e.touches[0].clientX;sy=e.touches[0].clientY;},{passive:true});
+  document.addEventListener("touchend",function(e){if(sx==null)return;var dx=e.changedTouches[0].clientX-sx,dy=e.changedTouches[0].clientY-sy;if(Math.abs(dx)>50&&Math.abs(dx)>Math.abs(dy))go(cur+(dx<0?1:-1));sx=null;},{passive:true});
+  update();
+
+  // Конфетти
+  var cv=document.getElementById("confetti"),ctx=cv.getContext("2d"),parts=[],raf=null,t0=0;
+  var cols=["#1f7a63","#d0902f","#7b5cb0","#c4493b","#4fb79b","#f0c35a"];
+  var reduce=window.matchMedia&&matchMedia("(prefers-reduced-motion: reduce)").matches;
+  function size(){var r=cv.getBoundingClientRect(),d=window.devicePixelRatio||1;cv.width=r.width*d;cv.height=r.height*d;ctx.setTransform(d,0,0,d,0,0);}
+  function spawn(burst){var w=cv.clientWidth,h=cv.clientHeight;
+    return{x:burst?w/2+(Math.random()-.5)*w*.3:Math.random()*w,y:burst?h*.45:-20,vx:burst?(Math.random()-.5)*14:(Math.random()-.5)*1.2,vy:burst?-Math.random()*13-4:Math.random()*1.5+1,
+      s:Math.random()*8+6,r:Math.random()*6,vr:(Math.random()-.5)*.3,c:cols[Math.random()*cols.length|0],round:Math.random()<.3};}
+  function frame(ts){
+    var w=cv.clientWidth,h=cv.clientHeight;ctx.clearRect(0,0,w,h);
+    if(ts-t0>1800&&parts.length<90&&Math.random()<.5)parts.push(spawn(false));
+    parts.forEach(function(p){p.vy+=p.vy<3?.25:0;p.vx*=.985;p.x+=p.vx+Math.sin((ts/600)+p.s)*.4;p.y+=p.vy;p.r+=p.vr;
+      ctx.save();ctx.translate(p.x,p.y);ctx.rotate(p.r);ctx.fillStyle=p.c;
+      if(p.round){ctx.beginPath();ctx.arc(0,0,p.s/2.4,0,6.3);ctx.fill();}else ctx.fillRect(-p.s/2,-p.s/4,p.s,p.s/2*Math.abs(Math.cos(p.r*2))+1);
+      ctx.restore();});
+    parts=parts.filter(function(p){return p.y<h+30;});
+    raf=requestAnimationFrame(frame);
+  }
+  function startConfetti(){if(reduce)return;size();parts=[];for(var i=0;i<160;i++)parts.push(spawn(true));t0=performance.now();cancelAnimationFrame(raf);
+    setTimeout(function(){if(cur==n-1){raf=requestAnimationFrame(frame);}},900);}
+  function stopConfetti(){cancelAnimationFrame(raf);raf=null;ctx.clearRect(0,0,cv.width,cv.height);}
+  window.addEventListener("resize",function(){if(raf)size();});
 })();
 </script>
