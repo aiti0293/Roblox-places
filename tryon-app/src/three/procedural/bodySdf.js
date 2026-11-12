@@ -1,37 +1,33 @@
 import { ellipsoid, loft, roundCone, smax, smin } from './sdf.js'
-import { BASE_BODY } from '../../lib/body.js'
+import { armAngleFor, bodyFrame } from '../../lib/pose.js'
 
 const mix = (a, b, t) => a + (b - a) * t
+const clamp01 = (v) => Math.min(1, Math.max(0, v))
 
-/** Полуоси эллипса по обхвату C (м) и соотношению глубина/ширина k. */
-function ellipseFromGirth(C, k) {
-  const a = C / (2 * Math.PI * Math.sqrt((1 + k * k) / 2))
-  return { a, b: a * k }
-}
+export const ALL_GROUPS = ['torso', 'breasts', 'glutes', 'neck', 'shoulders', 'arms', 'hands', 'legs', 'feet']
 
 /**
  * Женская фигура как одно гладкое поле расстояний.
- * Рост здесь не участвует (масштаб по Y делается на GPU) — все размеры
- * в «системе» базового роста 166 см.
+ * Рост здесь не участвует (масштаб по Y делается на GPU).
  *
- * @param {{bust:number, waist:number, hips:number}} body обхваты, см
- * @returns {(x:number,y:number,z:number)=>number}
+ * Поза: прямая, руки свободно опущены вдоль тела. Угол отведения рук
+ * минимальный — ровно такой, чтобы рука не «врастала» в бёдра/бока
+ * при данной фигуре (у полных фигур чуть больше).
+ *
+ * @param body   обхваты, см: { bust, waist, hips }
+ * @param opts.groups  какие части тела включить (для одежды)
+ * @param opts.offset  «надуть» поверхность на N метров (толщина одежды)
+ * @param opts.clip    (x,y,z) => d — отрезать всё, где d > 0 (подол, горловина)
+ * @param opts.sleeveClip — то же для рук; по умолчанию рукав — до запястья
+ * @param opts.armAngle  принудительный угол рук (для морфов)
  */
-export function makeBodySdf(body) {
-  const dB = (body.bust - BASE_BODY.bust) / 30
-  const dW = (body.waist - BASE_BODY.waist) / 30
-  const dH = (body.hips - BASE_BODY.hips) / 30
-  const dAll = (dB + dW + dH) / 3 // общая «полнота» — для рук и шеи
+export function makeBodySdf(body, { groups = ALL_GROUPS, offset = 0, clip = null, sleeveClip = null, armAngle: forcedAngle } = {}) {
+  const has = new Set(groups)
+  const { dB, dH, dAll, hip, waist, bust, ribA, upA, sx, kArm, shX, shY } = bodyFrame(body)
 
-  const hip = ellipseFromGirth(body.hips / 100, 0.74)
-  const waist = ellipseFromGirth(body.waist / 100, 0.72)
-  const bust = ellipseFromGirth(body.bust / 100, 0.7)
-
-  // ── корпус: таз → талия → грудная клетка → основание шеи ──────────
-  const ribA = bust.a * 0.9
+  // ── корпус ────────────────────────────────────────────────────────
   const ribF = bust.b * 0.84
   const ribB = bust.b * 0.92
-  const upA = 0.152 + (bust.a - 0.167) * 0.55
   const torso = loft([
     [0.74, hip.a * 0.5, hip.b * 0.5, hip.b * 0.55],
     [0.8, hip.a * 0.86, hip.b * 0.8, hip.b * 0.88],
@@ -46,51 +42,44 @@ export function makeBodySdf(body) {
     [1.4, 0.06, 0.048, 0.05, -0.01],
   ])
 
-  const parts = [] // [примитив, радиус сплавления]
-  const add = (p, k) => parts.push([p, k])
+  const parts = [] // { p, k, g (группа), side }
+  const add = (g, p, k, side = 0) => has.has(g) && parts.push({ p, k, g, side })
 
   // ── грудь ─────────────────────────────────────────────────────────
-  // мягкая каплевидная форма, большая часть объёма — за счёт грудной клетки
   const bs = Math.max(0.7, 1 + dB * 0.3)
   for (const s of [-1, 1]) {
-    add(
-      ellipsoid([s * (0.056 + bust.a * 0.18), 1.19 - dB * 0.015, ribF * 0.6], [0.062 * bs, 0.058 * bs, 0.05 * bs], s * 0.15),
-      0.075,
-    )
+    add('breasts', ellipsoid([s * (0.056 + bust.a * 0.18), 1.19 - dB * 0.015, ribF * 0.6], [0.062 * bs, 0.058 * bs, 0.05 * bs], s * 0.15), 0.075)
   }
 
   // ── ягодицы ───────────────────────────────────────────────────────
   const gs = Math.max(0.6, 1 + dH * 0.45)
   for (const s of [-1, 1]) {
-    add(ellipsoid([s * hip.a * 0.36, 0.875, -hip.b * 0.48], [0.088 * gs, 0.095 * gs, 0.078 * gs]), 0.06)
+    add('glutes', ellipsoid([s * hip.a * 0.36, 0.875, -hip.b * 0.48], [0.088 * gs, 0.095 * gs, 0.078 * gs]), 0.06)
   }
 
   // ── шея, трапеции, плечи ──────────────────────────────────────────
   const neckR = 0.049 * (1 + dAll * 0.15)
-  add(roundCone([0, 1.36, -0.016], [0, 1.53, 0.004], neckR * 1.08, neckR), 0.05)
-  const sx = 0.158 + (bust.a - 0.167) * 0.45 // плечевой сустав
-  const kArm = 1 + Math.max(-0.4, dAll) * 0.4
+  add('neck', roundCone([0, 1.36, -0.016], [0, 1.53, 0.004], neckR * 1.08, neckR), 0.05)
   for (const s of [-1, 1]) {
-    add(roundCone([0, 1.39, -0.022], [s * sx, 1.348, -0.016], 0.05, 0.042 * kArm), 0.06)
-    add(ellipsoid([s * (sx + 0.006), 1.322, -0.012], [0.05 * kArm, 0.058 * kArm, 0.05 * kArm]), 0.04)
+    add('shoulders', roundCone([0, 1.39, -0.022], [s * sx, 1.348, -0.016], 0.05, 0.042 * kArm), 0.06)
+    add('shoulders', ellipsoid([s * (sx + 0.006), 1.322, -0.012], [0.05 * kArm, 0.058 * kArm, 0.05 * kArm]), 0.04)
   }
 
-  // ── руки: плечо → локоть → запястье → кисть ───────────────────────
-  // поза «лёгкая А»: руки отведены так, чтобы не касаться бёдер даже
-  // у самых крупных фигур — геометрия рук не зависит от обхватов
-  const t1 = 0.17, t2 = 0.25
+  // ── руки: прямые, вдоль тела (угол — см. lib/pose.js) ──────────────
+  const armAngle = forcedAngle ?? armAngleFor(body)
+  const pivots = {}
   for (const s of [-1, 1]) {
-    const sh = [s * (sx + 0.012), 1.33, -0.014]
-    const el = [sh[0] + s * Math.sin(t1) * 0.29, sh[1] - Math.cos(t1) * 0.29, -0.03]
-    const wr = [el[0] + s * Math.sin(t2) * 0.245, el[1] - Math.cos(t2) * 0.245, 0.005]
-    add(roundCone(sh, el, 0.045 * kArm, 0.031 * Math.sqrt(kArm)), 0.03)
-    // бицепс/трицепс — лёгкий объём верхней трети
-    add(ellipsoid([mix(sh[0], el[0], 0.42), mix(sh[1], el[1], 0.42), -0.022], [0.04 * kArm, 0.1, 0.041 * kArm], -s * t1), 0.04)
-    add(roundCone(el, wr, 0.033 * Math.sqrt(kArm), 0.024), 0.03)
-    add(ellipsoid([mix(el[0], wr[0], 0.3), mix(el[1], wr[1], 0.3), -0.012], [0.032 * Math.sqrt(kArm), 0.08, 0.033], -s * t2), 0.035)
-    // кисть: ладонь к бедру, пальцы слегка собраны
-    const hc = [wr[0] + s * Math.sin(t2) * 0.07, wr[1] - Math.cos(t2) * 0.07, wr[2] + 0.006]
-    add(ellipsoid(hc, [0.022, 0.072, 0.04], -s * t2), 0.035)
+    const sa = Math.sin(armAngle), ca = Math.cos(armAngle)
+    const sh = [s * shX, shY, -0.014]
+    const el = [sh[0] + s * sa * 0.29, sh[1] - ca * 0.29, -0.028]
+    const wr = [el[0] + s * sa * 0.245, el[1] - ca * 0.245, 0.006] // локоть чуть расслаблен
+    pivots[s] = sh
+    add('arms', roundCone(sh, el, 0.045 * kArm, 0.031 * Math.sqrt(kArm)), 0.03, s)
+    add('arms', ellipsoid([mix(sh[0], el[0], 0.42), mix(sh[1], el[1], 0.42), -0.022], [0.04 * kArm, 0.1, 0.041 * kArm], -s * armAngle), 0.04, s)
+    add('arms', roundCone(el, wr, 0.033 * Math.sqrt(kArm), 0.024), 0.03, s)
+    add('arms', ellipsoid([mix(el[0], wr[0], 0.3), mix(el[1], wr[1], 0.3), -0.014], [0.032 * Math.sqrt(kArm), 0.08, 0.033], -s * armAngle), 0.035, s)
+    const hc = [wr[0] + s * sa * 0.07, wr[1] - ca * 0.07, wr[2] + 0.004]
+    add('hands', ellipsoid(hc, [0.021, 0.072, 0.04], -s * armAngle), 0.035, s)
   }
 
   // ── ноги ──────────────────────────────────────────────────────────
@@ -98,29 +87,63 @@ export function makeBodySdf(body) {
   const kLeg = 1 + Math.max(-0.4, dH) * 0.25
   for (const s of [-1, 1]) {
     const hj = [s * hip.a * 0.46, 0.86, 0]
-    const kn = [s * 0.072, 0.475, 0.012]
-    const an = [s * 0.07, 0.085, -0.012]
-    add(roundCone(hj, kn, thighR, 0.046 * kLeg), 0.07)
-    add(ellipsoid([s * (hip.a * 0.46 + 0.006), 0.66, 0.012], [thighR * 0.92, 0.17, thighR * 0.9]), 0.05) // квадрицепс
-    add(roundCone(kn, an, 0.045 * kLeg, 0.03), 0.03)
-    add(ellipsoid([s * 0.073, 0.315, -0.016], [0.046 * kLeg, 0.11, 0.047 * kLeg]), 0.04) // икра
-    // стопа
-    add(roundCone([s * 0.07, 0.045, -0.035], [s * 0.082, 0.024, 0.125], 0.034, 0.024), 0.035)
+    const kn = [s * 0.074, 0.475, 0.012]
+    const an = [s * 0.072, 0.085, -0.012]
+    add('legs', roundCone(hj, kn, thighR, 0.046 * kLeg), 0.07)
+    add('legs', ellipsoid([s * (hip.a * 0.46 + 0.006), 0.66, 0.012], [thighR * 0.92, 0.17, thighR * 0.9]), 0.05)
+    add('legs', roundCone(kn, an, 0.045 * kLeg, 0.03), 0.03)
+    add('legs', ellipsoid([s * 0.075, 0.315, -0.016], [0.046 * kLeg, 0.11, 0.047 * kLeg]), 0.04)
+    add('feet', roundCone([s * 0.072, 0.045, -0.035], [s * 0.084, 0.024, 0.125], 0.034, 0.024), 0.035)
   }
 
-  // проверка дальних частей — по ограничивающей сфере (быстро)
-  const prims = parts.map(([p, k]) => ({ p, k, cx: p.cx, cy: p.cy, cz: p.cz, r: p.bound + k }))
+  const prims = parts.map((q) => ({ ...q, cx: q.p.cx, cy: q.p.cy, cz: q.p.cz, r: q.p.bound + q.k }))
+  const useTorso = has.has('torso')
 
-  return function sdf(x, y, z) {
-    let d = torso.d(Math.abs(x), y, z)
-    for (let i = 0; i < prims.length; i++) {
-      const q = prims[i]
-      const far = Math.hypot(x - q.cx, y - q.cy, z - q.cz) - q.r
-      if (far > d) continue
+  // руки отдельно от корпуса: у одежды подол режет корпус, но не рукава
+  const isArm = (q) => q.g === 'arms' || q.g === 'hands'
+  const restPrims = prims.filter((q) => !isArm(q))
+  const armPrims = prims.filter(isArm)
+  const union = (list, d, x, y, z) => {
+    for (let i = 0; i < list.length; i++) {
+      const q = list[i]
+      if (Math.hypot(x - q.cx, y - q.cy, z - q.cz) - q.r > d) continue
       d = smin(d, q.p.d(x, y, z), q.k)
     }
-    d = smax(d, y - 1.49, 0.012) // аккуратный срез шеи
-    d = smax(d, -y, 0.004) // стопы стоят на полу
     return d
   }
+
+  const finish = (d, y) => smax(smax(d, y - 1.49, 0.012), -y, 0.004) // срез шеи, пол
+
+  function sdfRest(x, y, z) {
+    let d = union(restPrims, useTorso ? torso.d(Math.abs(x), y, z) : 1, x, y, z) - offset
+    if (clip) d = smax(d, clip(x, y, z), 0.01) // скруглённый край ткани
+    return finish(d, y)
+  }
+  function sdfArm(x, y, z) {
+    let d = union(armPrims, 1, x, y, z) - offset
+    if (sleeveClip) d = smax(d, sleeveClip(x, y, z), 0.01)
+    return finish(d, y)
+  }
+  // у тела рука плавно «вырастает» из плеча (и только там — иначе кисть
+  // «склеивается» с бедром); у одежды рукав и полочка — отдельные куски
+  const kJoin = (y) => (offset > 0 ? 0.008 : 0.004 + 0.026 * clamp01((y - 1.15) / 0.08))
+  const sdf = (x, y, z) => smin(sdfRest(x, y, z), sdfArm(x, y, z), kJoin(y))
+
+  /**
+   * Насколько точка «принадлежит» руке (0…1) и какой (side = ±1).
+   * Нужно, чтобы при смене фигуры рука поворачивалась как целое,
+   * а не «перетекала» по поверхности.
+   */
+  function armWeight(x, y, z) {
+    const side = x < 0 ? -1 : 1
+    let dArm = Infinity, dRest = useTorso ? torso.d(Math.abs(x), y, z) : Infinity
+    for (const q of prims) {
+      const v = q.p.d(x, y, z)
+      if ((q.g === 'arms' || q.g === 'hands') && q.side === side) dArm = Math.min(dArm, v)
+      else dRest = Math.min(dRest, v)
+    }
+    return { side, w: dArm === Infinity ? 0 : clamp01(0.5 + (dRest - dArm) / 0.015) }
+  }
+
+  return { sdf, sdfRest, sdfArm, armAngle, pivots, armWeight }
 }

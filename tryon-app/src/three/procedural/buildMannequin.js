@@ -1,5 +1,5 @@
-import { makeBodySdf } from './bodySdf.js'
 import { BASE_BODY } from '../../lib/body.js'
+import { ARMS_OUT } from '../../lib/pose.js'
 
 /**
  * Строит гладкий манекен: одна сплошная сетка + морф-таргеты.
@@ -22,30 +22,83 @@ export const MORPH_TARGETS = {
   Hips_Minus: { hips: -30 },
 }
 
-const BOUNDS = { min: [-0.36, -0.01, -0.19], max: [0.36, 1.505, 0.2] }
+const BOUNDS = { min: [-0.38, -0.01, -0.2], max: [0.38, 1.505, 0.21] }
 
-export function buildMannequin({ cell = 0.0075 } = {}) {
-  const base = makeBodySdf(BASE_BODY)
-  const { positions, index } = surfaceNets(base, BOUNDS, cell)
+/**
+ * @param make (body, extra) => makeBodySdf(body, { …, ...extra }) — тело или одежда
+ */
+export function buildMorphMesh(make, { cell = 0.0075, bounds = BOUNDS } = {}) {
+  const base = make(BASE_BODY)
+  const { positions, index } = surfaceNets(base.sdf, bounds, cell)
   const vCount = positions.length / 3
   const neighbors = buildNeighbors(index, vCount)
 
-  project(base, positions, 6)
+  project(base.sdf, positions, 6)
   for (let it = 0; it < 4; it++) {
     relax(positions, neighbors, 0.5)
-    project(base, positions, 3)
+    project(base.sdf, positions, 3)
   }
-  const normals = gradientNormals(base, positions)
+  const normals = gradientNormals(base.sdf, positions)
+
+  // принадлежность вершин рукам (0…1): руки и корпус морфятся раздельно
+  const armW = new Float32Array(vCount)
+  const armS = new Int8Array(vCount)
+  for (let v = 0; v < vCount; v++) {
+    const r = base.armWeight(positions[v * 3], positions[v * 3 + 1], positions[v * 3 + 2])
+    armW[v] = r.w
+    armS[v] = r.side
+  }
+
+  // Размерные морфы считаются с руками в базовой позе; отведение рук —
+  // отдельный морф Arms_Out (точный поворот на ARMS_OUT вокруг плеча).
+  const jobs = Object.entries(MORPH_TARGETS).map(([name, delta]) => [
+    name,
+    make({ ...BASE_BODY, ...Object.fromEntries(Object.entries(delta).map(([k, v]) => [k, BASE_BODY[k] + v])) }, { armAngle: base.armAngle }),
+    0,
+  ])
+  jobs.push(['Arms_Out', make(BASE_BODY, { armAngle: base.armAngle + ARMS_OUT }), ARMS_OUT])
 
   const morphs = {}
-  for (const [name, delta] of Object.entries(MORPH_TARGETS)) {
-    const sdf = makeBodySdf({ ...BASE_BODY, ...Object.fromEntries(Object.entries(delta).map(([k, v]) => [k, BASE_BODY[k] + v])) })
+  for (const [name, target, dA] of jobs) {
     const p = positions.slice()
-    project(sdf, p, 8)
-    relax(p, neighbors, 0.3)
-    project(sdf, p, 3)
-    const n = gradientNormals(sdf, p)
-    // относительные смещения (morphTargetsRelative)
+    const nrm = normals.slice()
+
+    // 1) руки — как жёсткое целое: поворот вокруг плеча + сдвиг плеча
+    for (let v = 0; v < vCount; v++) {
+      const w = armW[v]
+      if (w <= 0) continue
+      const s = armS[v]
+      const pb = base.pivots[s], pt = target.pivots[s]
+      const a = s * dA, c = Math.cos(a), sn = Math.sin(a)
+      const i = v * 3
+      const lx = p[i] - pb[0], ly = p[i + 1] - pb[1]
+      p[i] += (lx * c - ly * sn + pt[0] - p[i]) * w
+      p[i + 1] += (lx * sn + ly * c + pt[1] - p[i + 1]) * w
+      p[i + 2] += (pt[2] - pb[2]) * w
+      const nx = nrm[i], ny = nrm[i + 1]
+      nrm[i] += (nx * c - ny * sn - nx) * w
+      nrm[i + 1] += (nx * sn + ny * c - ny) * w
+    }
+
+    // 2) сдвиг до новой поверхности строго вдоль нормали; корпус — к
+    //    полю корпуса, руки — к полю рук (они не «цепляются» друг за друга)
+    const pR = p.slice(), pA = p.slice()
+    projectAlong(target.sdfRest, pR, nrm, 10, (v) => armW[v] < 1)
+    projectAlong(target.sdfArm, pA, nrm, 10, (v) => armW[v] > 0)
+    const nR = gradientNormals(target.sdfRest, pR)
+    const nA = gradientNormals(target.sdfArm, pA)
+    const n = new Float32Array(p.length)
+    for (let v = 0; v < vCount; v++) {
+      const w = armW[v], i = v * 3
+      let l = 0
+      for (let c = 0; c < 3; c++) {
+        p[i + c] = pR[i + c] + (pA[i + c] - pR[i + c]) * w
+        n[i + c] = nR[i + c] + (nA[i + c] - nR[i + c]) * w
+        l += n[i + c] * n[i + c]
+      }
+      l = Math.sqrt(l) || 1
+      for (let c = 0; c < 3; c++) n[i + c] /= l
+    }
     for (let i = 0; i < p.length; i++) {
       p[i] -= positions[i]
       n[i] -= normals[i]
@@ -165,6 +218,29 @@ function project(sdf, p, iters) {
       p[i] -= g[0] * d
       p[i + 1] -= g[1] * d
       p[i + 2] -= g[2] * d
+    }
+  }
+}
+
+function projectAlong(sdf, p, nrm, iters, filter) {
+  const g = [0, 0, 0]
+  for (let i = 0; i < p.length; i += 3) {
+    if (filter && !filter(i / 3)) continue
+    const len = Math.hypot(nrm[i], nrm[i + 1], nrm[i + 2]) || 1
+    const nx = nrm[i] / len, ny = nrm[i + 1] / len, nz = nrm[i + 2] / len
+    let travel = 0
+    for (let it = 0; it < iters; it++) {
+      const d = sdf(p[i], p[i + 1], p[i + 2])
+      if (Math.abs(d) < 2e-5) break
+      grad(sdf, p[i], p[i + 1], p[i + 2], g)
+      let den = g[0] * nx + g[1] * ny + g[2] * nz
+      if (Math.abs(den) < 0.3) den = den < 0 ? -0.3 : 0.3
+      // общий путь ограничен: точка не «перепрыгивает» на соседнюю часть тела
+      const t = Math.max(-0.07 - travel, Math.min(0.07 - travel, Math.max(-0.03, Math.min(0.03, d / den))))
+      travel += t
+      p[i] -= nx * t
+      p[i + 1] -= ny * t
+      p[i + 2] -= nz * t
     }
   }
 }

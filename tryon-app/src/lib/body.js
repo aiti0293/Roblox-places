@@ -37,10 +37,13 @@ export function estimateFromHeightWeight(height, weight) {
   }
 }
 
-/** Итоговая фигура из состояния стора (в зависимости от режима ввода). */
+/**
+ * Итоговая фигура из состояния стора. Если когда-нибудь вернём ввод
+ * точных мерок — они просто перекроют оценку по росту и весу.
+ */
 export function resolveBody(state) {
-  if (state.mode === 'hw') return estimateFromHeightWeight(state.height, state.weight)
-  return { height: state.height, bust: state.bust, waist: state.waist, hips: state.hips }
+  const est = estimateFromHeightWeight(state.height, state.weight)
+  return { ...est, ...(state.bust && { bust: state.bust }), ...(state.waist && { waist: state.waist }), ...(state.hips && { hips: state.hips }) }
 }
 
 /**
