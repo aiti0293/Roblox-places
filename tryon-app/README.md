@@ -4,6 +4,7 @@
 npm install
 npm run dev      # http://localhost:5173 (с --host — доступно с телефона в той же сети)
 npm run build    # статическая сборка в dist/
+npm run bake     # перезапечь манекен после правок в src/three/procedural/bodySdf.js (~10 с)
 ```
 
 ## Структура
@@ -13,7 +14,8 @@ npm run build    # статическая сборка в dist/
 | `src/store/useBodyStore.js` | Состояние фигуры (Zustand), режимы «Рост и вес» / «Мои мерки» |
 | `src/config/avatar.js` | `AVATAR_URL` и соответствие параметров → shape keys GLB |
 | `src/three/useDampedBody.js` | Плавное «догоняние» фигуры в `useFrame` без ре-рендеров React |
-| `src/three/PlaceholderAvatar.jsx` | Манекен из примитивов (пока нет GLB) |
+| `src/three/procedural/*` | Генератор гладкого манекена (SDF → сетка → морф-таргеты), только для `npm run bake` |
+| `public/models/mannequin.glb` | Запечённый манекен (1,6 МБ, meshopt) — временная замена вашей модели |
 | `src/three/GLBAvatar.jsx` | Загрузчик GLB, применяет веса морфов ко всем мешам группы (и к одежде) |
 | `src/three/Scene.jsx` | Canvas, студийный свет из Lightformer (без загрузки HDR), подиум, вращение |
 | `src/ui/*` | Панель параметров, слайдеры с кнопками «−/+», бейдж размера |

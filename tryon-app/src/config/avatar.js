@@ -1,11 +1,10 @@
 /**
  * Настройки 3D-манекена.
  *
- * Пока AVATAR_URL = null — показывается манекен из примитивов.
- * Когда появится GLB: положите файл в public/models/ и укажите путь,
- * например './models/avatar.glb'.
+ * По умолчанию — наш запечённый гладкий манекен (npm run bake).
+ * Свою модель кладите в public/models/ и укажите путь здесь.
  */
-export const AVATAR_URL = null
+export const AVATAR_URL = './models/mannequin.glb'
 
 /**
  * Соответствие параметров фигуры и морф-таргетов (shape keys из Blender).

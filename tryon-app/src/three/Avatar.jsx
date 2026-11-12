@@ -2,14 +2,13 @@ import { useMemo } from 'react'
 import * as THREE from 'three'
 import { AVATAR_URL } from '../config/avatar'
 import { GLBAvatar } from './GLBAvatar'
-import { PlaceholderAvatar } from './PlaceholderAvatar'
 
 /** Матовый «витринный» пластик с лёгким бархатным отблеском. */
 function useMannequinMaterial() {
   return useMemo(
     () =>
       new THREE.MeshPhysicalMaterial({
-        color: '#dccabc',
+        color: '#d4c0b1',
         envMapIntensity: 0.85,
         roughness: 0.52,
         metalness: 0,
@@ -25,5 +24,5 @@ function useMannequinMaterial() {
 
 export function Avatar() {
   const material = useMannequinMaterial()
-  return AVATAR_URL ? <GLBAvatar url={AVATAR_URL} material={material} /> : <PlaceholderAvatar material={material} />
+  return <GLBAvatar url={AVATAR_URL} material={material} />
 }
