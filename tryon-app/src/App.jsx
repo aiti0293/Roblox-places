@@ -4,6 +4,8 @@ import { Gallery } from './ui/Gallery'
 import { MannequinToggle } from './ui/MannequinToggle'
 import { ParamCard } from './ui/ParamCard'
 import { NextButton } from './ui/NextButton'
+import { SizeBadge } from './ui/SizeBadge'
+import { getSizeFit } from './lib/size'
 import { useBodyStore } from './store/useBodyStore'
 import { PRODUCT, formatPrice } from './data/product'
 import { LIMITS } from './lib/body'
@@ -26,7 +28,7 @@ const enter = (delay) => ({
  *   ВЫБРАННАЯ ОДЕЖДА          [МАНЕКЕН]
  *   ┌──────── photo gallery ────────┐
  *   [ ВЕС кг ]  [ РОСТ см ]
- *   price                     (Далее →)
+ *   [Ваш размер: 46 M]       (Далее →)
  */
 export default function App() {
   const [onModel, setOnModel] = useState(true)
@@ -34,6 +36,7 @@ export default function App() {
   const height = useBodyStore((s) => s.height)
   const setValue = useBodyStore((s) => s.setValue)
   const mode = onModel ? 'model' : 'hanger'
+  const recommendation = getSizeFit(weight, height) // recalculated on every change
 
   const next = () => {
     try {
@@ -60,7 +63,9 @@ export default function App() {
             <br />
             одежда
           </h1>
-          <p className="mt-1.5 text-[16px] font-medium text-muted">{PRODUCT.name}</p>
+          <p className="mt-1.5 text-[16px] font-medium text-muted">
+            {PRODUCT.name} · <span className="whitespace-nowrap font-bold text-ink">{formatPrice(PRODUCT.price)}</span>
+          </p>
         </div>
         <MannequinToggle on={onModel} onToggle={() => setOnModel((v) => !v)} />
       </motion.header>
@@ -85,12 +90,11 @@ export default function App() {
         <ParamCard label="РОСТ" unit="см" value={height} onChange={(v) => setValue('height', v)} tone={TONES.height} {...LIMITS.height} />
       </motion.section>
 
-      <motion.footer {...enter(0.24)} className="flex shrink-0 items-center justify-between gap-3">
-        <div className="leading-tight">
-          <div className="text-[14px] font-medium text-muted">Цена</div>
-          <div className="text-[24px] font-extrabold tabular-nums text-ink">{formatPrice(PRODUCT.price)}</div>
+      <motion.footer {...enter(0.24)} className="flex shrink-0 items-stretch gap-3">
+        <SizeBadge {...recommendation} />
+        <div className="flex items-center">
+          <NextButton onClick={next} />
         </div>
-        <NextButton onClick={next} />
       </motion.footer>
     </div>
   )
