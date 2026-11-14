@@ -1,19 +1,16 @@
 --!strict
 --[[
-	SaveService — единственный сервис, который читает и пишет профили игроков.
-	Работает строго через ProfileService (ReplicatedStorage.Packages.ProfileService).
+	SaveService — the only service that reads and writes player profiles.
+	Built on ProfileService (ReplicatedStorage.Packages.ProfileService).
 
-	Жизненный цикл игрока:
-	  PlayerAdded    → загрузка профиля (ForceLoad) → Reconcile → чистка данных
-	                 → сигнал ProfileLoaded  (BaseService спавнит базу)
-	  PlayerRemoving → сигнал PlayerLeaving  (BaseService возвращает брейнрота из рук
-	                   и деспавнит базу) → profile:Release() (финальное сохранение)
+	Player lifecycle:
+	  PlayerAdded    -> load profile (ForceLoad) -> Reconcile -> sanitize
+	                 -> ProfileLoaded signal (BaseService builds the base)
+	  PlayerRemoving -> PlayerLeaving signal (BaseService clears the base)
+	                 -> profile:Release() (final save)
 
-	Правило данных: слоты в профиле меняются ТОЛЬКО когда брейнрот реально
-	поставлен/украден. Пока брейнрот «в руках» — в профиле он остаётся за
-	владельцем, поэтому выход/краш сервера никогда не теряет брейнротов.
-
-	Другие сервисы НЕ трогают profile.Data напрямую — только через API ниже.
+	Other services never touch profile.Data directly — only the API below.
+	The client sees money through attributes: Money and MoneyCap.
 ]]
 
 local Players = game:GetService("Players")
@@ -25,7 +22,7 @@ local DataConfig = require(ReplicatedStorage.Shared.DataConfig)
 local GameConfig = DataConfig.GameConfig
 
 ----------------------------------------------------------------------
--- Мини-сигнал (чтобы не тянуть отдельную библиотеку)
+-- Tiny signal (no extra library)
 ----------------------------------------------------------------------
 
 type Signal = {
@@ -41,8 +38,8 @@ local function createSignal(): Signal
 		table.insert(listeners, fn)
 	end
 
-	-- task.spawn запускает слушателя сразу (до первого yield),
-	-- поэтому порядок сохраняется, а ошибка одного не ломает остальных
+	-- task.spawn runs each listener immediately (until its first yield),
+	-- so order is kept and one failing listener does not break the others
 	function signal:Fire(...)
 		for _, fn in listeners do
 			task.spawn(fn, ...)
@@ -53,58 +50,59 @@ local function createSignal(): Signal
 end
 
 ----------------------------------------------------------------------
--- Состояние
+-- State
 ----------------------------------------------------------------------
 
 local SaveService = {}
 
-SaveService.ProfileLoaded = createSignal() -- (player, data) — профиль готов
-SaveService.PlayerLeaving = createSignal() -- (player, data) — до Release профиля.
--- ВАЖНО: слушатели PlayerLeaving не должны yield'ить (task.wait и т.п.),
--- иначе профиль сохранится раньше, чем они закончат работу.
+SaveService.ProfileLoaded = createSignal() -- (player, data)
+SaveService.PlayerLeaving = createSignal() -- (player, data) — fired before Release.
+-- PlayerLeaving listeners must not yield, otherwise the profile is saved before they finish.
 
 local profileStore = ProfileService.GetProfileStore(GameConfig.ProfileStoreName, DataConfig.ProfileTemplate)
 local profiles: { [Player]: any } = {}
 
 ----------------------------------------------------------------------
--- Внутренние функции
+-- Internal
 ----------------------------------------------------------------------
 
--- Убираем из слотов брейнротов, которых больше нет в конфиге
--- (например, переименовали Id) и слоты за пределами BaseSlotCount
-local function sanitizeData(data)
-	for slot, id in data.BaseSlots do
-		local index = tonumber(slot)
-		if not DataConfig.GetBrainrot(id) or not index or index < 1 or index > GameConfig.BaseSlotCount then
-			data.BaseSlots[slot] = nil
-		end
-	end
+local function isValidSlot(slot: string): boolean
+	local index = tonumber(slot)
+	return index ~= nil and index % 1 == 0 and index >= 1 and index <= GameConfig.PlotCount
 end
 
--- Деньги дублируем в атрибут — клиентский UI читает его без Remote'ов
-local function syncCash(player: Player, data)
-	player:SetAttribute("Cash", data.Cash)
+-- Drop plots outside the map and units that no longer exist in the config
+local function sanitizeData(data)
+	for slot, unitId in data.Plots do
+		if not isValidSlot(slot) then
+			data.Plots[slot] = nil
+		elseif unitId ~= "" and not DataConfig.GetUnit(unitId) then
+			data.Plots[slot] = ""
+		end
+	end
+	data.Money = math.clamp(data.Money, 0, GameConfig.MoneyCapacity)
+end
+
+local function syncMoney(player: Player, data)
+	player:SetAttribute("Money", data.Money)
+	player:SetAttribute("MoneyCap", GameConfig.MoneyCapacity)
 end
 
 local function onPlayerAdded(player: Player)
 	local profile = profileStore:LoadProfileAsync("Player_" .. player.UserId, "ForceLoad")
-
 	if not profile then
-		-- Профиль занят другим сервером и не освободился — безопаснее кикнуть
-		player:Kick("Не удалось загрузить данные. Перезайдите, пожалуйста.")
+		player:Kick("Could not load your data. Please rejoin.")
 		return
 	end
 
 	profile:AddUserId(player.UserId) -- GDPR
-	profile:Reconcile() -- подставляем новые поля из шаблона
-
-	-- Если профиль открыли на другом сервере — этот сервер обязан отпустить игрока
+	profile:Reconcile()
 	profile:ListenToRelease(function()
 		profiles[player] = nil
-		player:Kick("Ваши данные открыты на другом сервере.")
+		player:Kick("Your data was opened on another server.")
 	end)
 
-	-- Игрок мог выйти, пока профиль грузился
+	-- The player may have left while the profile was loading
 	if not player:IsDescendantOf(Players) then
 		profile:Release()
 		return
@@ -112,7 +110,7 @@ local function onPlayerAdded(player: Player)
 
 	sanitizeData(profile.Data)
 	profiles[player] = profile
-	syncCash(player, profile.Data)
+	syncMoney(player, profile.Data)
 	player:SetAttribute("DataLoaded", true)
 
 	SaveService.ProfileLoaded:Fire(player, profile.Data)
@@ -123,41 +121,32 @@ local function onPlayerRemoving(player: Player)
 	if not profile then
 		return
 	end
-
-	-- Сначала даём сервисам прибраться (деспавн базы, возврат брейнрота из рук),
-	-- и только потом сохраняем — чтобы в профиль попало финальное состояние
 	SaveService.PlayerLeaving:Fire(player, profile.Data)
-
 	profiles[player] = nil
 	profile:Release()
 end
 
 ----------------------------------------------------------------------
--- Жизненный цикл сервиса
+-- Lifecycle
 ----------------------------------------------------------------------
 
 function SaveService:Init(_services)
-	-- Зависимостей нет: SaveService грузится первым
+	-- No dependencies: SaveService loads first
 end
 
 function SaveService:Start()
 	Players.PlayerAdded:Connect(onPlayerAdded)
 	Players.PlayerRemoving:Connect(onPlayerRemoving)
-
-	-- Игроки, зашедшие до подписки (актуально для Studio)
 	for _, player in Players:GetPlayers() do
 		task.spawn(onPlayerAdded, player)
 	end
-
-	-- Финальные сохранения при закрытии сервера ProfileService делает сам
-	-- (внутренний BindToClose), здесь ничего добавлять не нужно
+	-- ProfileService saves everything on server shutdown by itself (BindToClose)
 end
 
 ----------------------------------------------------------------------
--- Публичное API: общее
+-- API: general
 ----------------------------------------------------------------------
 
--- Данные игрока или nil, если профиль ещё не загружен / уже выгружен
 function SaveService:GetData(player: Player)
 	local profile = profiles[player]
 	return profile and profile.Data
@@ -168,94 +157,71 @@ function SaveService:IsLoaded(player: Player): boolean
 end
 
 ----------------------------------------------------------------------
--- Публичное API: деньги
+-- API: money (always clamped to MoneyCapacity)
 ----------------------------------------------------------------------
 
-function SaveService:GetCash(player: Player): number
+function SaveService:GetMoney(player: Player): number
 	local data = self:GetData(player)
-	return data and data.Cash or 0
+	return data and data.Money or 0
 end
 
-function SaveService:AddCash(player: Player, amount: number)
+-- Returns how much was actually added (can be less because of the money cap)
+function SaveService:AddMoney(player: Player, amount: number): number
 	local data = self:GetData(player)
 	if not data or amount <= 0 then
-		return
+		return 0
 	end
-	data.Cash += amount
-	syncCash(player, data)
+	local before = data.Money
+	data.Money = math.min(GameConfig.MoneyCapacity, data.Money + amount)
+	syncMoney(player, data)
+	return data.Money - before
 end
 
--- Возвращает true, если денег хватило и они списаны
-function SaveService:SpendCash(player: Player, amount: number): boolean
+-- true if the player had enough money and it was spent
+function SaveService:SpendMoney(player: Player, amount: number): boolean
 	local data = self:GetData(player)
-	if not data or amount < 0 or data.Cash < amount then
+	if not data or amount < 0 or data.Money < amount then
 		return false
 	end
-	data.Cash -= amount
-	syncCash(player, data)
+	data.Money -= amount
+	syncMoney(player, data)
 	return true
 end
 
 ----------------------------------------------------------------------
--- Публичное API: слоты базы (ключи — строки "1".."BaseSlotCount")
+-- API: plots. Value: nil = not bought, "" = owned and empty, unitId = unit placed
 ----------------------------------------------------------------------
 
--- Таблица слотов только для чтения: { ["1"] = "Noobini", ... }
-function SaveService:GetSlots(player: Player): { [string]: string }
+function SaveService:GetPlots(player: Player): { [string]: string }
 	local data = self:GetData(player)
-	return data and table.clone(data.BaseSlots) or {}
+	return data and table.clone(data.Plots) or {}
 end
 
-function SaveService:GetSlot(player: Player, slot: string): string?
+function SaveService:GetPlot(player: Player, slot: string): string?
 	local data = self:GetData(player)
-	return data and data.BaseSlots[slot]
+	return data and data.Plots[slot]
 end
 
--- Поставить брейнрота (id) или очистить слот (nil). Возвращает успех.
-function SaveService:SetSlot(player: Player, slot: string, brainrotId: string?): boolean
+function SaveService:SetPlot(player: Player, slot: string, value: string?): boolean
 	local data = self:GetData(player)
-	local index = tonumber(slot)
-	if not data or not index or index < 1 or index > GameConfig.BaseSlotCount then
+	if not data or not isValidSlot(slot) then
 		return false
 	end
-	if brainrotId and not DataConfig.GetBrainrot(brainrotId) then
+	if value and value ~= "" and not DataConfig.GetUnit(value) then
 		return false
 	end
-	data.BaseSlots[slot] = brainrotId
+	data.Plots[slot] = value
 	return true
 end
 
--- Первый свободный слот или nil, если база заполнена
-function SaveService:FindFreeSlot(player: Player): string?
-	local data = self:GetData(player)
-	if not data then
-		return nil
-	end
-	for i = 1, GameConfig.BaseSlotCount do
-		local key = tostring(i)
-		if data.BaseSlots[key] == nil then
-			return key
-		end
-	end
-	return nil
-end
-
 ----------------------------------------------------------------------
--- Публичное API: статистика
+-- API: stats
 ----------------------------------------------------------------------
 
 function SaveService:IncrementStat(player: Player, stat: string, amount: number?)
 	local data = self:GetData(player)
 	if data and data.Stats[stat] ~= nil then
 		data.Stats[stat] += amount or 1
-	end
-end
-
--- Для рекордов вида «максимальный тир стены»
-function SaveService:SetStatMax(player: Player, stat: string, value: number)
-	local data = self:GetData(player)
-	if data and data.Stats[stat] ~= nil then
-		data.Stats[stat] = math.max(data.Stats[stat], value)
 	end
 end
 

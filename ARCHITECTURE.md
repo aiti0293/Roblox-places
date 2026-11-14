@@ -1,110 +1,88 @@
-# Архитектура серверной части
+# Architecture
 
-## Структура проекта (Rojo)
+Voxel (LEGO-style) base-defense game for Roblox: a Town Hall in the center of a forest
+clearing, plots around it where the player places voxel monsters, and waves of enemies
+coming out of the dark forest. Later: raids on other players' bases.
+
+Code, comments and identifiers are in English.
+
+## Core loop
+
+```
+build base (buy plots) -> place / upgrade units -> survive waves -> earn money -> raid others (later)
+```
+
+## Project layout (Rojo-compatible)
 
 ```
 src/
-├── shared/                         → ReplicatedStorage.Shared
-│   └── DataConfig.lua              — все константы и таблицы (Brainrot/Wall/Game/Boss)
-├── server/                         → ServerScriptService.Server
-│   ├── Main.server.lua             — точка входа: Remotes + Init/Start сервисов
+├── shared/                         -> ReplicatedStorage.Shared
+│   ├── DataConfig.lua              — all constants: economy, rarities, units, profile template, remotes
+│   ├── VoxelModel.lua              — builds models out of small cube Parts (groups with hinges)
+│   └── UnitModels.lua              — voxel definitions of the monsters (jaw = LowerJaw group)
+├── server/                         -> ServerScriptService.Server
+│   ├── Main.server.lua             — entry point: Remotes + Init/Start of services
 │   └── Services/
-│       ├── SaveService.lua         — ProfileService: загрузка/сохранение профилей
-│       ├── BaseService.lua         — участки баз, слоты, пассивный доход, «в руках»
-│       ├── CannonService.lua       — 3 нейтральные пушки: захват, зарядка, выстрел
-│       ├── WallService.lua         — личные стены игроков, HP кирпичей, обломки, реген
-│       ├── BossService.lua         — машина состояний: Sleep → Chase → Return
-│       └── SecurityService.lua     — лазеры, красная кнопка, бита, тревога/WANTED
-└── client/                         → StarterPlayerScripts.Client (позже)
-Packages/                           → ReplicatedStorage.Packages (ProfileService)
+│       ├── SaveService.lua         — ProfileService: money (with cap), plots, stats
+│       ├── BaseService.lua         — base ownership, buy plot / place unit / sell unit
+│       ├── UnitService.lua         — (next) targeting, jaw opening, attacks by rarity
+│       └── WaveService.lua         — (next) enemy waves from Workspace.EnemySpawns
+└── client/                         -> StarterPlayerScripts.Client (later: HUD, shop UI)
+Packages/ProfileService.lua         -> ReplicatedStorage.Packages.ProfileService
+tools/
+├── blender/build_map.py            — builds the voxel map in Blender
+├── blender/render_previews.py      — preview renders
+├── blender/export_map.py           — exports the map to BrainrotMap.json
+├── blender/run_headless.py         — build + render + export without the Blender UI
+└── ImportBlenderMap.lua            — builds the map in Studio from BrainrotMap.json
 ```
 
-## Контракт сервиса
-
-Каждый сервис — ModuleScript, возвращающий таблицу:
+## Service contract
 
 ```lua
 local MyService = {}
-
-function MyService:Init(services)  -- получить ссылки на другие сервисы
-	self.Save = services.SaveService
-end
-
-function MyService:Start()         -- подписки на события, циклы
-end
-
+function MyService:Init(services) end  -- grab references to other services
+function MyService:Start() end         -- connect events, start loops
 return MyService
 ```
 
-`Main.server.lua` грузит сервисы в фиксированном порядке:
-`SaveService → BaseService → WallService → CannonService → BossService → SecurityService`.
-Циклических `require` нет — сервисы общаются через таблицу `services`, переданную в `Init`.
+`Main` loads services in a fixed order: `SaveService -> BaseService -> UnitService -> WaveService`.
+Services talk through the `services` table passed to `Init` (no circular requires).
 
-## Зоны ответственности и связи
+## State ("store")
 
-| Сервис | Владеет состоянием | Кого вызывает |
+The server is the single source of truth (the Roblox equivalent of a Zustand store):
+
+| Data | Owner | How the client sees it |
 |---|---|---|
-| **SaveService** | `Profiles[player]` | — |
-| **BaseService** | участок игрока, слоты, `HeldBrainrot[player]` | SaveService |
-| **CannonService** | `Cannons[i] = {Owner, BrainrotId}` | BaseService (забрать из рук), WallService (урон) |
-| **WallService** | `Walls[player] = {Tier, Bricks}` | SaveService (награда, статистика) |
-| **BossService** | `Bosses[id] = {State, Target}` | BaseService (выронить брейнрота) |
-| **SecurityService** | лазеры, кулдауны биты, удержание кнопки | BaseService (выронить / кража) |
+| Money, money cap | SaveService (profile) | player attributes `Money`, `MoneyCap` |
+| Plots: `[slot] = unitId / ""` | SaveService (profile) | plot glow + unit models in Workspace |
+| Base owner | BaseService | `Workspace.Base` attributes `OwnerUserId`, `OwnerName` |
 
-### Ключевое правило: «брейнрот в руках»
-Единственный источник правды — `BaseService.HeldBrainrot[player]`:
-`{ Id, FromOwner: Player, FromSlot: string }`.
-- В руках → доход не идёт (слот визуально пуст, но «зарезервирован» за владельцем).
-- В профиле (SaveService) слот НЕ очищается, пока брейнрот в руках/в пушке.
-  Профиль меняется только при реальной краже (вор поставил брейнрота к себе).
-  Поэтому выход игрока или падение сервера не теряют брейнротов.
-- `BaseService:DropHeld(player)` — **единая точка** для всех случаев потери:
-  удар битой, поймал босс, смерть от лазера, выход из игры.
-  Брейнрот мгновенно возвращается на базу владельца (`FromOwner`).
+Clients only send requests (`RequestBuyPlot`, `RequestPlaceUnit`, `RequestSellUnit`);
+the server validates ownership, money and slot state. This keeps multiplayer / raids
+possible later without trusting the client.
 
-## Игровой цикл (поток данных)
+## Units and rarities
 
-```
-[База] RequestPickup ──► BaseService.HeldBrainrot
-        │
-[Пушка] RequestCannon ──► CannonService: захват свободной пушки,
-        │                 брейнрот из рук вставляется в пушку,
-        │                 скин по редкости (DataConfig.Rarities[r].CannonSkin)
-[Hit]   RequestFire ──► CannonService: игрок = снаряд (AssemblyLinearVelocity)
-        │                 В МОМЕНТ ВЫСТРЕЛА: брейнрот мгновенно исчезает из пушки
-        │                 и возвращается в слот на базе игрока (он его сохраняет),
-        │                 пушка сразу становится нейтральной и свободна для любого
-        │
-[Стена] Touched ──► WallService:Damage(player, LaunchPower)
-        │            кирпичи с HP ≤ 0 → Unanchored обломки → Debris
-        │            через WallRegenTime стена восстанавливается
-[Земля] игрок падает у Boss Zone
-        │
-[Босс]  RequestPickup брейнрота босса ──► BossService: Sleep → Chase
-        ├─ догнал  → BaseService:DropHeld → Return → Sleep
-        └─ игрок в Safe Zone → Return → Sleep
-```
+| Rarity | Attack | Example unit |
+|---|---|---|
+| Common | Bite (small cube projectile) | Chomper |
+| Rare | Fireball (glowing orange/red cube) | Firemaw |
+| Epic | Laser (raycast beam) | Laserjaw |
+| Legendary | not designed yet (Laser for now) | Kingmaw |
 
-## Лазеры
+Every unit has a `LowerJaw` model with a hinge: before firing it rotates by
+`UnitModels.JawOpenAngle` to open the mouth.
 
-Лазеры существуют **только в дверных проёмах баз** (`Plot.Doorway.Lasers`) — это защита от воров.
-В Shooting Zone, у стен и в Boss Zone лазеров нет.
+## Map contract (Workspace)
 
-## Безопасность (анти-чит)
+- `Base.TownHall` — Town Hall (PrimaryPart `Foundation`), crystal inside: `TownHall.Crystal`
+  (attributes `IsCrystal`, `MaxHP`).
+- `Base.BrainrotPlots.Plot1..Plot116` — plots in 3 rings (attribute `SlotIndex`;
+  `Spot` has attribute `Row`), each with `Pedestal`, 4 `Glow` strips and an invisible `Spot`.
+- `Base.SafeZone`, `Base.SpawnLocation`.
+- `EnemySpawns.North/South/East/West` — where waves come from.
+- `Forest`, `Ground`, `MapBounds` — decoration and invisible borders.
 
-- Клиент только **просит** (Request*). Все проверки — на сервере: дистанция, кулдауны, владение.
-- Удар битой: сервер проверяет `BatCooldown` и `BatRange` сам, клиентский хит-лист игнорируется.
-- Деньги и слоты меняются только через SaveService — один путь записи в профиль.
-- Состояние для UI отдаётся через `Attributes` (`player:SetAttribute("Cash", …)`)
-  и RemoteEvent'ы из `DataConfig.Remotes`. Деньги — только атрибут `Cash`.
-
-## Что нужно в Workspace / ServerStorage
-
-- `workspace.BasePlots/Plot1..Plot6` — точки баз (у каждой: `RedButton`, `Slots/1..10`, `Doorway/Lasers`, `SafeZone`).
-- `workspace.Cannons/Cannon1..Cannon3` — нейтральные пушки (`Seat`/`Barrel`, `HitPrompt`).
-- `workspace.WallLanes/Lane1..Lane6` — точки, где строится личная стена игрока.
-- `workspace.BossZone/<BossId>` — точки сна боссов.
-- `ServerStorage.Brainrots`, `ServerStorage.CannonSkins`, `ServerStorage.Bosses` — модели.
-- `Packages/ProfileService` — модуль ProfileService (MadStudioRoblox).
-
-> Максимум 6 игроков задаётся в **Game Settings → Places → Max Players** (скриптом не меняется).
+The map is built in Blender (`tools/blender`) and imported with `ServerStorage.Tools.ImportBlenderMap`.

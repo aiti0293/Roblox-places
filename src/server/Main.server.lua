@@ -1,16 +1,16 @@
 --!strict
 --[[
-	Main — единственный серверный Script (точка входа).
-	Создаёт RemoteEvent'ы и запускает сервисы в два этапа:
-	  1) Init()  — подготовка, сервисы могут получать ссылки друг на друга;
-	  2) Start() — подписки на события и запуск игровых циклов.
-	Порядок важен: SaveService первым, т.к. остальным нужны данные игроков.
+	Main — the only server Script (entry point).
+	Creates the RemoteEvents and starts the services in two phases:
+	  1) Init()  — services grab references to each other;
+	  2) Start() — connect events, start loops.
+	SaveService goes first because everything else needs player data.
 ]]
 
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local DataConfig = require(ReplicatedStorage.Shared.DataConfig)
 
--- Создаём папку с RemoteEvent'ами по списку из конфига
+-- RemoteEvents from the config list
 local remotes = Instance.new("Folder")
 remotes.Name = "Remotes"
 for _, name in DataConfig.Remotes do
@@ -20,14 +20,12 @@ for _, name in DataConfig.Remotes do
 end
 remotes.Parent = ReplicatedStorage
 
--- Порядок загрузки сервисов
+-- Load order (services that are not written yet are skipped with a warning)
 local ORDER = {
 	"SaveService",
 	"BaseService",
-	"WallService",
-	"CannonService",
-	"BossService",
-	"SecurityService",
+	"UnitService", -- next: units open their jaw and shoot at enemies
+	"WaveService", -- next: waves of monsters from the forest edges
 }
 
 local servicesFolder = script.Parent:WaitForChild("Services")
@@ -38,11 +36,11 @@ for _, name in ORDER do
 	if module then
 		loaded[name] = require(module) :: any
 	else
-		warn(`[Main] Сервис {name} не найден — пропускаю`)
+		warn(`[Main] Service {name} not found — skipped`)
 	end
 end
 
--- Этап 1: Init
+-- Phase 1: Init
 for _, name in ORDER do
 	local service = loaded[name]
 	if service and service.Init then
@@ -50,7 +48,7 @@ for _, name in ORDER do
 	end
 end
 
--- Этап 2: Start (в отдельных потоках, чтобы один сервис не блокировал остальные)
+-- Phase 2: Start (each in its own thread so one service cannot block the others)
 for _, name in ORDER do
 	local service = loaded[name]
 	if service and service.Start then
@@ -58,4 +56,4 @@ for _, name in ORDER do
 	end
 end
 
-print("[Main] Все сервисы запущены")
+print("[Main] All services started")
