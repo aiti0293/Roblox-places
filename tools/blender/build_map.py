@@ -2,8 +2,9 @@
 build_map.py — строит воксельную карту игры в Blender (только кубы).
 
 Раскладка (координаты Roblox: Y — вверх, 1 юнит Blender = 1 stud):
-  • центр — база игрока: каменная площадь и РАТУША из больших и маленьких кубов;
-  • вокруг — кольцо из 10 подиумов для брейнротов, дорожка, фонари, цветы, забор;
+  • центр — база игрока: площадь и средневековая РАТУША с кристаллом внутри;
+  • вокруг — мраморная платформа с подсветкой снизу и 3 ряда мест для брейнротов;
+  • дальше — поляна, фонари, цветы, забор;
   • дальше — тёмный густой лес из кубических ёлок и дубов, подлесок, светящиеся грибы;
   • 4 тропы к краям карты, на их концах точки появления врагов.
 
@@ -25,8 +26,6 @@ SEED = 2026
 MAP_HALF = 350
 CLEARING_R = 115
 FOREST_START = 125
-PLOT_COUNT = 10
-PLOT_R = 46
 TRAIL_HALF = 7
 
 # Флаги для Roblox
@@ -58,7 +57,6 @@ C = {
     "roof_b": (245, 120, 50),
     "glass": (110, 200, 255),
     "gold": (255, 205, 40),
-    "flag": (40, 120, 255),
     "banner": (200, 30, 45),
     "trunk": [(70, 45, 28), (60, 38, 24), (82, 54, 32)],
     "leaves": [(22, 58, 30), (17, 46, 26), (28, 68, 34), (14, 38, 22), (34, 60, 26)],
@@ -140,7 +138,7 @@ def make_cube_mesh():
 CUBE = make_cube_mesh()
 _materials = {}
 
-ROUGHNESS = {"Neon": 0.4, "Glass": 0.05, "SmoothPlastic": 0.45, "Slate": 0.9, "Grass": 0.95, "Ground": 1.0}
+ROUGHNESS = {"Marble": 0.25, "Metal": 0.35, "Neon": 0.4, "Glass": 0.05, "SmoothPlastic": 0.45, "Slate": 0.9, "Grass": 0.95, "Ground": 1.0}
 
 
 def material(color, rbx_mat):
@@ -240,136 +238,222 @@ for v in range(-P // 2, P // 2 + 1, 4):
         box("Base/Plaza", "Border", (2, 1.4, 4), (s * (P / 2 + 1), 0.7, v), C["stone_border"], "Slate")
 
 # ----------------------------------------------------------------------------
-# 3. Ратуша (TownHall) — дверь смотрит на +Z
+# 3. Ратуша (TownHall) — средневековый стиль, вход смотрит на +Z.
+#    Первый этаж полый: внутри на постаменте светится Кристалл (Crystal).
+#    Если разрушить башню и кристалл — запасы игрока крадут (логика — в сервисе).
 # ----------------------------------------------------------------------------
 
+M = {
+    "cobble": (105, 105, 110),
+    "stone": (138, 134, 126),
+    "stone_light": (168, 163, 152),
+    "stone_dark": (88, 86, 84),
+    "plaster": (226, 214, 186),
+    "timber": (62, 40, 26),
+    "slate": (58, 62, 78),
+    "slate2": (74, 78, 96),
+    "iron": (55, 55, 60),
+    "slit": (28, 28, 34),
+    "fire": (255, 150, 50),
+    "window": (255, 196, 110),
+    "crystal": (90, 220, 255),
+    "crystal2": (175, 245, 255),
+    "carpet": (130, 25, 35),
+}
 TH = "Base/TownHall"
-box(TH, "Foundation", (30, 3, 30), (0, 2.5, 0), C["sand"], "Sandstone")
-box(TH, "FoundationTrim", (31, 0.6, 31), (0, 4.3, 0), C["stone_border"], "Slate")
-for k, (w, d, y, z) in enumerate([(12, 3, 1.5, 16.5), (12, 2, 2.5, 16), (12, 1, 3.5, 15.5)]):
-    box(TH, "Step", (w, 1, d), (0, y, z), C["sand"], "Sandstone")
 
-# Первый этаж
-box(TH, "Floor1", (22, 10, 22), (0, 9.6, 0), C["cream"], "Brick")
-# Балконный выступ
-box(TH, "Ledge", (24, 1, 24), (0, 15.1, 0), C["wood_dark"], "WoodPlanks")
-# Второй этаж
-box(TH, "Floor2", (18, 8, 18), (0, 19.6, 0), C["cream2"], "Brick")
-# Перила балкона из маленьких кубов
-for i in range(-5, 6):
-    for s in (-1, 1):
-        col = C["gold"] if i % 2 == 0 else C["wood"]
-        box(TH, "Rail", (1, 1, 1), (i * 2.2, 16.1, s * 11.5), col)
-        box(TH, "Rail", (1, 1, 1), (s * 11.5, 16.1, i * 2.2), col)
+# Фундамент и ступени
+box(TH, "Foundation", (35, 3, 35), (0, 2.5, 0), M["cobble"], "Cobblestone")
+box(TH, "FoundationTrim", (36, 0.6, 36), (0, 4.3, 0), M["stone_dark"], "Slate")
+for k in range(3):
+    box(TH, "Step", (12, 1, 3 - k), (0, 1.5 + k, 19 - k * 0.5), M["stone_light"], "Slate")
 
-# Угловые башенки
+# Первый этаж — каменные стены с проёмом, внутри пусто
+FL = 4.6  # уровень пола
+H1 = 10
+W1 = 24
+DOOR_W, DOOR_H = 8, 8
+wy = FL + H1 / 2
+side = (W1 - DOOR_W) / 2
+box(TH, "WallBack", (W1, H1, 2), (0, wy, -W1 / 2 + 1), M["stone"], "Cobblestone")
+box(TH, "WallLeft", (2, H1, W1 - 4), (-W1 / 2 + 1, wy, 0), M["stone"], "Cobblestone")
+box(TH, "WallRight", (2, H1, W1 - 4), (W1 / 2 - 1, wy, 0), M["stone"], "Cobblestone")
+box(TH, "WallFrontL", (side, H1, 2), (-(DOOR_W / 2 + side / 2), wy, W1 / 2 - 1), M["stone"], "Cobblestone")
+box(TH, "WallFrontR", (side, H1, 2), (DOOR_W / 2 + side / 2, wy, W1 / 2 - 1), M["stone"], "Cobblestone")
+box(TH, "WallFrontTop", (DOOR_W, H1 - DOOR_H, 2), (0, FL + DOOR_H + (H1 - DOOR_H) / 2, W1 / 2 - 1), M["stone"], "Cobblestone")
+
+# Арка входа из светлого камня + замковый камень
+for s in (-1, 1):
+    box(TH, "ArchPost", (1.2, DOOR_H, 2.4), (s * (DOOR_W / 2 + 0.6), FL + DOOR_H / 2, W1 / 2 - 1), M["stone_light"], "Slate")
+    box(TH, "ArchCorner", (1.6, 1, 2.2), (s * (DOOR_W / 2 - 0.8), FL + DOOR_H - 0.5, W1 / 2 - 1), M["stone_light"], "Slate")
+    box(TH, "ArchCorner", (0.8, 0.8, 2.2), (s * (DOOR_W / 2 - 1.9), FL + DOOR_H - 0.4, W1 / 2 - 1), M["stone_light"], "Slate")
+box(TH, "Keystone", (2, 1.6, 2.6), (0, FL + DOOR_H + 0.6, W1 / 2 - 1), M["stone_light"], "Slate")
+
+# Угловые камни (квоины) — чередующиеся светлые блоки
 for sx in (-1, 1):
     for sz in (-1, 1):
-        x, z = sx * 11.5, sz * 11.5
-        box(TH, "CornerTower", (3.6, 20, 3.6), (x, 14.6, z), C["stone"], "Slate")
-        box(TH, "CornerCap", (4.6, 1, 4.6), (x, 25.1, z), C["stone_border"], "Slate")
-        for k, w in enumerate((3.6, 2.4, 1.2)):
-            box(TH, "CornerRoof", (w, 1.6, w), (x, 26.4 + k * 1.6, z), C["roof_a"] if k % 2 == 0 else C["roof_b"])
+        for k in range(5):
+            big = k % 2 == 0
+            box(TH, "Quoin", (2.6 if big else 2.2, 1.6, 2.2 if big else 2.6),
+                (sx * (W1 / 2 - 1), FL + 1 + k * 2, sz * (W1 / 2 - 1)), M["stone_light"], "Slate")
 
-# Дверь с золотой рамкой и баннеры
-box(TH, "Door", (6, 8, 1), (0, 8.6, 11.1), C["wood_dark"], "WoodPlanks")
-box(TH, "DoorFrameL", (1, 9, 1.4), (-3.5, 9.1, 11.2), C["gold"])
-box(TH, "DoorFrameR", (1, 9, 1.4), (3.5, 9.1, 11.2), C["gold"])
-box(TH, "DoorFrameTop", (8, 1, 1.4), (0, 13.1, 11.2), C["gold"])
-box(TH, "DoorKnob", (0.6, 0.6, 0.6), (1.8, 8.6, 11.7), C["gold"])
+# Внутри: ковёр, постамент и кристалл
+box(TH, "Carpet", (3, 0.1, 8), (0, FL + 0.05, 7), M["carpet"], "Fabric")
+box(TH, "CrystalBase", (4, 1.5, 4), (0, FL + 0.75, 0), M["stone_light"], "Slate")
+box(TH, "CrystalBaseTrim", (4.6, 0.4, 4.6), (0, FL + 1.5, 0), M["iron"], "Metal")
+CY = FL + 1.7
+box(TH, "Crystal", (2, 4.5, 2), (0, CY + 2.25, 0), M["crystal"], "Neon", yaw=math.pi / 4,
+    extra={"light_range": 26, "light_brightness": 3, "attr_IsCrystal": True, "attr_MaxHP": 1000})
+box(TH, "CrystalTip", (1.3, 1.5, 1.3), (0, CY + 5.2, 0), M["crystal2"], "Neon", yaw=math.pi / 4)
+for (dx, dz) in ((1.3, 0), (-1.3, 0), (0, 1.3), (0, -1.3)):
+    box(TH, "CrystalShard", (0.9, 2, 0.9), (dx, CY + 1, dz), M["crystal2"], "Neon", yaw=math.pi / 4)
+
+# Факелы у входа
 for s in (-1, 1):
-    box(TH, "Banner", (3, 7, 0.4), (s * 7, 10, 11.2), C["banner"])
-    box(TH, "BannerEmblem", (1.4, 1.4, 0.5), (s * 7, 10.8, 11.3), C["gold"])
+    box(TH, "TorchBracket", (0.6, 1.4, 0.8), (s * 6, FL + 5.6, W1 / 2 + 0.4), M["iron"], "Metal")
+    box(TH, "TorchFlame", (0.9, 0.9, 0.9), (s * 6, FL + 6.7, W1 / 2 + 0.5), M["fire"], "Neon", flags=F_NOSHADOW,
+        extra={"light_range": 16, "light_brightness": 2})
 
-# Табличка «РАТУША»
-box(TH, "Sign", (12, 3, 0.6), (0, 16.6, 12.3), C["wood_dark"], "WoodPlanks",
-    extra={"label": "РАТУША", "face": "Back", "textcolor": list(C["gold"])})
+# Табличка «РАТУША» над аркой
+box(TH, "Sign", (10, 2, 0.5), (0, FL + H1 - 0.8, W1 / 2 + 0.3), M["timber"], "WoodPlanks",
+    extra={"label": "РАТУША", "face": "Back", "textcolor": [255, 205, 40]})
 
-# Окна (стекло + деревянные подоконники) на всех 4 сторонах
-def window(cx, cy, cz, w, h, axis):
-    """axis='z' — окно на грани ±Z, 'x' — на грани ±X."""
-    if axis == "z":
-        box(TH, "Window", (w, h, 0.6), (cx, cy, cz), C["glass"], "Neon")
-        box(TH, "Sill", (w + 1, 0.6, 1), (cx, cy - h / 2 - 0.3, cz), C["wood"])
-        box(TH, "WindowTop", (w + 1, 0.6, 1), (cx, cy + h / 2 + 0.3, cz), C["wood"])
-    else:
-        box(TH, "Window", (0.6, h, w), (cx, cy, cz), C["glass"], "Neon")
-        box(TH, "Sill", (1, 0.6, w + 1), (cx, cy - h / 2 - 0.3, cz), C["wood"])
-        box(TH, "WindowTop", (1, 0.6, w + 1), (cx, cy + h / 2 + 0.3, cz), C["wood"])
+# Второй этаж — фахверк (штукатурка + тёмные балки), нависает над первым
+U0 = FL + H1  # 14.6
+W2 = 26
+box(TH, "FloorBeam", (W2 + 0.4, 1, W2 + 0.4), (0, U0 + 0.5, 0), M["timber"], "WoodPlanks")
+box(TH, "Upper", (W2, 8, W2), (0, U0 + 5, 0), M["plaster"], "SmoothPlastic")
+UT = U0 + 9  # верх второго этажа
+for face in ("+z", "-z", "+x", "-x"):
+    for i, t in enumerate((-12.6, -6.3, 0, 6.3, 12.6)):
+        if face in ("+z", "-z"):
+            zz = (W2 / 2 + 0.15) * (1 if face == "+z" else -1)
+            box(TH, "Beam", (0.8, 8, 0.4), (t, U0 + 5, zz), M["timber"], "WoodPlanks")
+        else:
+            xx = (W2 / 2 + 0.15) * (1 if face == "+x" else -1)
+            box(TH, "Beam", (0.4, 8, 0.8), (xx, U0 + 5, t), M["timber"], "WoodPlanks")
+    for h in (U0 + 1.4, UT - 0.4):
+        if face in ("+z", "-z"):
+            box(TH, "Beam", (W2 + 0.6, 0.8, 0.4), (0, h, (W2 / 2 + 0.15) * (1 if face == "+z" else -1)), M["timber"], "WoodPlanks")
+        else:
+            box(TH, "Beam", (0.4, 0.8, W2 + 0.6), ((W2 / 2 + 0.15) * (1 if face == "+x" else -1), h, 0), M["timber"], "WoodPlanks")
+    for t in (-9.45, -3.15, 3.15, 9.45):
+        if face in ("+z", "-z"):
+            zz = (W2 / 2 + 0.1) * (1 if face == "+z" else -1)
+            box(TH, "Window", (2, 3, 0.3), (t, U0 + 5, zz), M["window"], "Neon")
+            box(TH, "Sill", (2.8, 0.5, 0.8), (t, U0 + 3.3, zz), M["timber"], "WoodPlanks")
+        else:
+            xx = (W2 / 2 + 0.1) * (1 if face == "+x" else -1)
+            box(TH, "Window", (0.3, 3, 2), (xx, U0 + 5, t), M["window"], "Neon")
+            box(TH, "Sill", (0.8, 0.5, 2.8), (xx, U0 + 3.3, t), M["timber"], "WoodPlanks")
 
-
-for wx in (-6, 6):
-    # на фасаде (+Z) первого этажа вместо окон висят баннеры
-    window(wx, 10, -11.05, 3, 4, "z")
-    window(11.05, 10, wx, 3, 4, "x")
-    window(-11.05, 10, wx, 3, 4, "x")
-for wx in (-5, 0, 5):
-    window(wx, 20, 9.05, 2, 3, "z")
-    window(wx, 20, -9.05, 2, 3, "z")
-    window(9.05, 20, wx, 2, 3, "x")
-    window(-9.05, 20, wx, 2, 3, "x")
-
-# Ступенчатая крыша
-roof_y = 24.6
-size = 22
+# Сланцевая ступенчатая крыша
+size = 28
 layer = 0
-while size >= 6:
-    box(TH, "Roof", (size, 2, size), (0, roof_y + layer * 2, 0), C["roof_a"] if layer % 2 == 0 else C["roof_b"])
+while size >= 8:
+    box(TH, "Roof", (size, 2, size), (0, UT + 1 + layer * 2, 0), M["slate"] if layer % 2 == 0 else M["slate2"], "Slate")
     size -= 4
     layer += 1
-top_y = roof_y + layer * 2 - 1
+ROOF_TOP = UT + layer * 2
 
-# Центральная башня с часами, зубцами и флагом
-box(TH, "Tower", (7, 10, 7), (0, top_y + 5, 0), C["cream"], "Brick")
-box(TH, "ClockFace", (4, 4, 0.6), (0, top_y + 6, 3.7), C["gold"])
-box(TH, "ClockCenter", (1, 1, 0.7), (0, top_y + 6, 3.8), C["wood_dark"])
-box(TH, "ClockHand", (0.4, 1.6, 0.75), (0, top_y + 6.8, 3.85), C["wood_dark"])
-box(TH, "TowerCap", (8, 1, 8), (0, top_y + 10.5, 0), C["stone_border"], "Slate")
-for i in range(-1, 2):
+# Угловые башни со стрелковыми бойницами и острыми крышами
+for sx in (-1, 1):
+    for sz in (-1, 1):
+        x, z = sx * 14.8, sz * 14.8
+        box(TH, "CornerTower", (5, 24, 5), (x, FL + 12, z), M["stone"], "Cobblestone")
+        for y in (FL + 6, FL + 16):
+            box(TH, "ArrowSlit", (0.7, 2.6, 0.4), (x, y, z + sz * 2.55), M["slit"])
+            box(TH, "ArrowSlit", (0.4, 2.6, 0.7), (x + sx * 2.55, y, z), M["slit"])
+        ty = FL + 24
+        box(TH, "TowerCap", (6, 1, 6), (x, ty + 0.5, z), M["stone_light"], "Slate")
+        for (mx, mz) in ((-2.3, -2.3), (2.3, -2.3), (-2.3, 2.3), (2.3, 2.3), (0, -2.3), (0, 2.3), (-2.3, 0), (2.3, 0)):
+            box(TH, "Merlon", (1.2, 1.4, 1.2), (x + mx, ty + 1.7, z + mz), M["stone_light"], "Slate")
+        for k, w in enumerate((4.2, 3, 1.8, 0.8)):
+            box(TH, "TowerRoof", (w, 2, w), (x, ty + 2 + k * 2, z), M["slate"] if k % 2 == 0 else M["slate2"], "Slate")
+        box(TH, "Finial", (0.5, 1.6, 0.5), (x, ty + 9.8, z), M["iron"], "Metal")
+
+# Центральная башня (донжон) — без флага
+KY = ROOF_TOP - 1
+box(TH, "Tower", (8, 10, 8), (0, KY + 5, 0), M["stone"], "Cobblestone")
+for k in range(5):
+    big = k % 2 == 0
+    for sx in (-1, 1):
+        for sz in (-1, 1):
+            box(TH, "Quoin", (1.8 if big else 1.4, 1.6, 1.4 if big else 1.8), (sx * 3.6, KY + 1 + k * 2, sz * 3.6), M["stone_light"], "Slate")
+for (dx, dz, sxz) in ((0, 4.05, "z"), (0, -4.05, "z"), (4.05, 0, "x"), (-4.05, 0, "x")):
+    size_ = (0.8, 2.6, 0.4) if sxz == "z" else (0.4, 2.6, 0.8)
+    box(TH, "ArrowSlit", size_, (dx, KY + 5.5, dz), M["slit"])
+box(TH, "TowerCap", (9.6, 1, 9.6), (0, KY + 10.5, 0), M["stone_light"], "Slate")
+for t in (-4, -1.33, 1.33, 4):
     for s in (-1, 1):
-        box(TH, "Battlement", (1.6, 1.6, 1.6), (i * 3.2, top_y + 11.8, s * 3.2), C["stone"], "Slate")
-        if i != 0:
-            box(TH, "Battlement", (1.6, 1.6, 1.6), (s * 3.2, top_y + 11.8, 0), C["stone"], "Slate")
-box(TH, "FlagPole", (0.8, 12, 0.8), (0, top_y + 17, 0), C["wood_dark"])
-box(TH, "Flag", (7, 4, 0.5), (3.9, top_y + 21, 0), C["flag"])
-box(TH, "FlagStripe", (7, 0.8, 0.6), (3.9, top_y + 21, 0), C["gold"])
+        box(TH, "Merlon", (1.6, 1.6, 1.6), (t, KY + 11.8, s * 4), M["stone_light"], "Slate")
+        if abs(t) < 4:
+            box(TH, "Merlon", (1.6, 1.6, 1.6), (s * 4, KY + 11.8, t), M["stone_light"], "Slate")
+for k, w in enumerate((6, 4.4, 2.8, 1.2)):
+    box(TH, "TowerRoof", (w, 2, w), (0, KY + 12 + k * 2, 0), M["slate"] if k % 2 == 0 else M["slate2"], "Slate")
+box(TH, "Finial", (0.6, 2, 0.6), (0, KY + 20, 0), M["iron"], "Metal")
 
-# Ящики и бочки-кубы у ратуши
-for (x, z) in [(-13, 17), (-11, 18.5), (13, 17), (12.5, 18.6), (-17, -10), (17, 8)]:
+# Ящики у ратуши
+for (x, z) in [(-19, 18), (-17.5, 19.5), (19, 18), (18.5, 20), (-19, -8), (19, 6)]:
     s = rng.uniform(1.6, 2.4)
     box(TH, "Crate", (s, s, s), (x, 1 + s / 2, z), C["wood"], "WoodPlanks", yaw=rng.uniform(0, 0.6))
 
 # ----------------------------------------------------------------------------
-# 4. Подиумы для брейнротов (Plot1..Plot10)
+# 4. Мраморная платформа с подсветкой снизу и 3 ряда мест для брейнротов
 # ----------------------------------------------------------------------------
 
-for i in range(1, PLOT_COUNT + 1):
-    a = (i - 1) / PLOT_COUNT * math.pi * 2 + math.pi / PLOT_COUNT
-    x, _, z = ring_pos(PLOT_R, a)
-    yaw = yaw_to_center(x, z)
-    path = f"Base/BrainrotPlots/Plot{i}"
-    ca, sa = math.cos(yaw), math.sin(yaw)
+DECK_IN, DECK_OUT = 34, 72
+BANDS = [(34, 46.67), (46.67, 59.33), (59.33, 72)]
+DECK_SEG = 72
+MARBLE = [(222, 223, 232), (210, 212, 222)]  # платформа чуть серее, места — белоснежные
+GLOW = (150, 230, 255)
 
-    def local(lx, ly, lz):
-        # локальные координаты подиума -> мировые (поворот вокруг Y как в Roblox)
-        return (x + lx * ca + lz * sa, ly, z - lx * sa + lz * ca)
+for bi, (r0, r1) in enumerate(BANDS):
+    rc = (r0 + r1) / 2
+    seg_len = 2 * math.pi * r1 / DECK_SEG + 0.3
+    for k in range(DECK_SEG):
+        a = (k + 0.5) / DECK_SEG * math.pi * 2
+        x, _, z = ring_pos(rc, a)
+        box("Base/Platform", "Marble", (seg_len, 0.8, r1 - r0 + 0.05), (x, 1.3, z), MARBLE[(k + bi) % 2], "Marble",
+            yaw=yaw_to_center(x, z))
 
-    box(path, "Pedestal", (10, 1.2, 10), (x, 1.0, z), C["stone_dark"], "Slate", yaw=yaw)
-    box(path, "Top", (8, 1, 8), (x, 2.1, z), PLOT_COLORS[i - 1], yaw=yaw)
-    for lx in (-4.25, 4.25):
-        for lz in (-4.25, 4.25):
-            box(path, "Corner", (1.5, 1.5, 1.5), local(lx, 2.85, lz), C["gold"], yaw=yaw)
-    box(path, "Step", (4, 0.6, 2), local(0, 0.7, -6), C["stone"], "Slate", yaw=yaw)
-    box(path, "Spot", (4, 0.2, 4), (x, 2.7, z), (255, 255, 255), yaw=yaw, flags=F_MARKER,
-        extra={"slot": i})
+# Подсветка снизу: неоновые кольца под внешним и внутренним краем
+for r in (DECK_OUT - 0.2, DECK_IN + 0.2):
+    seg_len = 2 * math.pi * r / DECK_SEG + 0.2
+    for k in range(DECK_SEG):
+        a = (k + 0.5) / DECK_SEG * math.pi * 2
+        x, _, z = ring_pos(r, a)
+        box("Base/Platform", "UnderGlow", (seg_len, 0.5, 1.2), (x, 0.65, z), GLOW, "Neon", yaw=yaw_to_center(x, z),
+            flags=F_NOSHADOW)
 
-# Дорожка-кольцо между ратушей и подиумами
-RING_R = PLOT_R - 9
-for k in range(48):
-    a = k / 48 * math.pi * 2
-    x, _, z = ring_pos(RING_R, a)
-    box("Base/RingPath", "PathBlock", (5, 0.3, 5), (x, 0.55, z), rng.choice(C["dirt"]), "Ground", yaw=yaw_to_center(x, z))
+# Бортик по внешнему краю
+seg_len = 2 * math.pi * (DECK_OUT - 0.5) / DECK_SEG + 0.2
+for k in range(DECK_SEG):
+    a = (k + 0.5) / DECK_SEG * math.pi * 2
+    x, _, z = ring_pos(DECK_OUT - 0.5, a)
+    box("Base/Platform", "Rim", (seg_len, 0.4, 1), (x, 1.9, z), (222, 222, 230), "Marble", yaw=yaw_to_center(x, z))
 
+# Места для брейнротов: 3 ряда, шаг ~8.5 stud по кругу
+SLOT_SPACING = 8.5
+slot = 0
+for row, (r0, r1) in enumerate(BANDS, start=1):
+    rc = (r0 + r1) / 2
+    n = int(2 * math.pi * rc // SLOT_SPACING)
+    for k in range(n):
+        a = (k + 0.5) / n * math.pi * 2
+        x, _, z = ring_pos(rc, a)
+        yaw = yaw_to_center(x, z)
+        slot += 1
+        path = f"Base/BrainrotPlots/Plot{slot}"
+        ca, sa = math.cos(yaw), math.sin(yaw)
+        box(path, "Pedestal", (5.8, 0.7, 5.8), (x, 2.05, z), (255, 255, 255), "Marble", yaw=yaw)
+        # светящаяся кайма по краям места
+        for (lx, lz, w, d) in ((0, 3.1, 6.4, 0.4), (0, -3.1, 6.4, 0.4), (3.1, 0, 0.4, 5.8), (-3.1, 0, 0.4, 5.8)):
+            box(path, "Glow", (w, 0.25, d), (x + lx * ca + lz * sa, 2.0, z - lx * sa + lz * ca), GLOW, "Neon",
+                yaw=yaw, flags=F_NOSHADOW)
+        box(path, "Spot", (4, 0.2, 4), (x, 2.5, z), (255, 255, 255), yaw=yaw, flags=F_MARKER,
+            extra={"slot": slot, "attr_Row": row})
+print(f"slots={slot}")
 # ----------------------------------------------------------------------------
 # 5. Фонари, забор, цветы
 # ----------------------------------------------------------------------------
@@ -405,7 +489,7 @@ for k in range(n_posts):
 # Цветы на поляне (вне колец и троп)
 placed = 0
 while placed < 160:
-    r = rng.uniform(56, CLEARING_R - 16)
+    r = rng.uniform(78, CLEARING_R - 16)
     a = rng.uniform(0, math.pi * 2)
     x, _, z = ring_pos(r, a)
     if abs(x) < TRAIL_HALF + 3 or abs(z) < TRAIL_HALF + 3:
@@ -416,7 +500,7 @@ while placed < 160:
 
 # Служебные: безопасная зона и точка появления
 box("Base", "SafeZone", (CLEARING_R * 2, 30, CLEARING_R * 2), (0, 15, 0), (255, 255, 255), flags=F_MARKER | F_TOUCH)
-box("Base", "SpawnLocation", (8, 1, 8), (0, 1.2, 24), C["gold"], flags=F_SPAWN)
+box("Base", "SpawnLocation", (8, 1, 8), (0, 1.2, 28), C["gold"], flags=F_SPAWN)
 
 # ----------------------------------------------------------------------------
 # 6. Тёмный густой лес

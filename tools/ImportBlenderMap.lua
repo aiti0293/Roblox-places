@@ -143,6 +143,12 @@ local function build(data)
 			if extra.slot then
 				part:SetAttribute("SlotIndex", extra.slot)
 			end
+			-- Ключи вида attr_Имя становятся атрибутами (IsCrystal, MaxHP, Row…)
+			for key, value in extra do
+				if string.sub(key, 1, 5) == "attr_" then
+					part:SetAttribute(string.sub(key, 6), value)
+				end
+			end
 		end
 
 		part.Parent = container(path)
