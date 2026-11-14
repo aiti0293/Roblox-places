@@ -2,7 +2,7 @@
 build_map.py — строит воксельную карту игры в Blender (только кубы).
 
 Раскладка (координаты Roblox: Y — вверх, 1 юнит Blender = 1 stud):
-  • центр — база игрока: площадь и средневековая РАТУША с кристаллом внутри;
+  • центр — база игрока: площадь и средневековая ратуша (TownHall) с кристаллом внутри;
   • вокруг — мраморная платформа с подсветкой снизу и 3 ряда мест для брейнротов;
   • дальше — поляна, фонари, цветы, забор;
   • дальше — тёмный густой лес из кубических ёлок и дубов, подлесок, светящиеся грибы;
@@ -27,6 +27,7 @@ MAP_HALF = 350
 CLEARING_R = 115
 FOREST_START = 125
 TRAIL_HALF = 7
+TOWNHALL_SCALE = 0.68  # масштаб ратуши (1.0 — исходный размер)
 
 # Флаги для Roblox
 F_MARKER = 1  # невидимая служебная часть (без коллизии, без тени)
@@ -169,6 +170,11 @@ def box(path, name, size, pos, color, mat="SmoothPlastic", yaw=0.0, flags=0, ext
     obj = bpy.data.objects.new(f"{name}.{_counter:05d}", CUBE)
     sx, sy, sz = size
     x, y, z = pos
+    if path == "Base/TownHall":
+        # ратуша строится в «полном» размере и уменьшается вокруг центра площади
+        k = TOWNHALL_SCALE
+        sx, sy, sz = sx * k, sy * k, sz * k
+        x, y, z = x * k, 1 + (y - 1) * k, z * k
     obj.location = (x, -z, y)
     obj.scale = (sx, sz, sy)
     obj.rotation_euler = (0, 0, yaw)
@@ -226,7 +232,7 @@ for d in ((1, 0), (-1, 0), (0, 1), (0, -1)):
 # 2. База: площадь
 # ----------------------------------------------------------------------------
 
-P = 44
+P = 36
 for ix in range(P // 4):
     for iz in range(P // 4):
         col = C["stone"] if (ix + iz) % 2 == 0 else C["stone_dark"]
@@ -314,9 +320,15 @@ for s in (-1, 1):
     box(TH, "TorchFlame", (0.9, 0.9, 0.9), (s * 6, FL + 6.7, W1 / 2 + 0.5), M["fire"], "Neon", flags=F_NOSHADOW,
         extra={"light_range": 16, "light_brightness": 2})
 
-# Табличка «РАТУША» над аркой
-box(TH, "Sign", (10, 2, 0.5), (0, FL + H1 - 0.8, W1 / 2 + 0.3), M["timber"], "WoodPlanks",
-    extra={"label": "РАТУША", "face": "Back", "textcolor": [255, 205, 40]})
+# Табличка «TOWN HALL» над аркой: доска с железной оковкой, средневековый шрифт
+SIGN_Y = FL + H1 - 0.8
+box(TH, "Sign", (10, 2, 0.5), (0, SIGN_Y, W1 / 2 + 0.3), M["timber"], "WoodPlanks",
+    extra={"label": "TOWN HALL", "face": "Back", "textcolor": [255, 214, 120], "font": "Fantasy",
+           "stroke": [40, 22, 10]})
+for s in (-1, 1):
+    box(TH, "SignIron", (0.6, 2.4, 0.7), (s * 5.1, SIGN_Y, W1 / 2 + 0.3), M["iron"], "Metal")
+    box(TH, "SignRivet", (0.3, 0.3, 0.3), (s * 5.1, SIGN_Y + 0.7, W1 / 2 + 0.7), (190, 170, 120), "Metal")
+    box(TH, "SignRivet", (0.3, 0.3, 0.3), (s * 5.1, SIGN_Y - 0.7, W1 / 2 + 0.7), (190, 170, 120), "Metal")
 
 # Второй этаж — фахверк (штукатурка + тёмные балки), нависает над первым
 U0 = FL + H1  # 14.6

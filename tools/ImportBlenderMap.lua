@@ -131,11 +131,16 @@ local function build(data)
 				local t = Instance.new("TextLabel")
 				t.Size = UDim2.fromScale(1, 1)
 				t.BackgroundTransparency = 1
-				t.Font = Enum.Font.FredokaOne
+				local fontOk, font = pcall(function()
+					return (Enum.Font :: any)[extra.font or "FredokaOne"]
+				end)
+				t.Font = if fontOk and font then font else Enum.Font.FredokaOne
 				t.TextScaled = true
 				t.Text = extra.label
 				local tc = extra.textcolor
 				t.TextColor3 = if tc then Color3.fromRGB(tc[1], tc[2], tc[3]) else Color3.new(1, 1, 1)
+				local sc = extra.stroke
+				t.TextStrokeColor3 = if sc then Color3.fromRGB(sc[1], sc[2], sc[3]) else Color3.new(0, 0, 0)
 				t.TextStrokeTransparency = 0
 				t.Parent = gui
 				gui.Parent = part
