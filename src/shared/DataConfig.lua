@@ -45,7 +45,7 @@ DataConfig.GameConfig = table.freeze({
 	-- Base / plots (must match the map: Workspace.Base.BrainrotPlots/Plot1..PlotN)
 	PlotCount = 116,
 	PlotPriceByRow = { 50, 150, 400 }, -- row 1 = inner ring, row 3 = outer ring
-	DefaultUnit = "Chomper", -- unit placed by the plot prompt (until the shop UI exists)
+	DefaultUnit = "Ripper", -- unit placed by the plot prompt (until the shop UI exists)
 
 	-- Persistence
 	ProfileStoreName = "PlayerData_v2",
@@ -64,14 +64,14 @@ DataConfig.Rarities = table.freeze({
 } :: { [RarityName]: RarityInfo })
 
 ----------------------------------------------------------------------
--- 3. Units (voxel monsters). Key = Id.
+-- 3. Units (voxel werewolves, see UnitModels). Key = Id.
 ----------------------------------------------------------------------
 
 DataConfig.UnitConfig = table.freeze({
-	Chomper = { Id = "Chomper", DisplayName = "Chomper", Rarity = "Common", Price = 100, Damage = 10, Range = 30, FireRate = 1.0, Model = "Chomper" },
-	Firemaw = { Id = "Firemaw", DisplayName = "Firemaw", Rarity = "Rare", Price = 400, Damage = 25, Range = 40, FireRate = 0.8, Model = "Firemaw" },
-	Laserjaw = { Id = "Laserjaw", DisplayName = "Laserjaw", Rarity = "Epic", Price = 1200, Damage = 40, Range = 50, FireRate = 1.2, Model = "Laserjaw" },
-	Kingmaw = { Id = "Kingmaw", DisplayName = "Kingmaw", Rarity = "Legendary", Price = 3000, Damage = 90, Range = 60, FireRate = 1.0, Model = "Kingmaw" },
+	Ripper = { Id = "Ripper", DisplayName = "Ripper", Rarity = "Common", Price = 100, Damage = 10, Range = 30, FireRate = 1.0, Model = "Ripper" },
+	Bloodfang = { Id = "Bloodfang", DisplayName = "Bloodfang", Rarity = "Rare", Price = 400, Damage = 25, Range = 40, FireRate = 0.8, Model = "Bloodfang" },
+	Nightmaw = { Id = "Nightmaw", DisplayName = "Nightmaw", Rarity = "Epic", Price = 1200, Damage = 40, Range = 50, FireRate = 1.2, Model = "Nightmaw" },
+	Alpha = { Id = "Alpha", DisplayName = "Alpha", Rarity = "Legendary", Price = 3000, Damage = 90, Range = 60, FireRate = 1.0, Model = "Alpha" },
 } :: { [string]: UnitInfo })
 
 ----------------------------------------------------------------------
