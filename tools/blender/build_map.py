@@ -23,9 +23,9 @@ import bpy
 
 ROOT = "RobloxMap"
 SEED = 2026
-MAP_HALF = 350
-CLEARING_R = 115
-FOREST_START = 125
+MAP_HALF = 420
+CLEARING_R = 185  # big open battlefield around the base
+FOREST_START = 195
 TRAIL_HALF = 7
 TOWNHALL_SCALE = 0.68  # масштаб ратуши (1.0 — исходный размер)
 
@@ -467,41 +467,15 @@ for row, (r0, r1) in enumerate(BANDS, start=1):
             extra={"slot": slot, "attr_Row": row})
 print(f"slots={slot}")
 # ----------------------------------------------------------------------------
-# 5. Фонари, забор, цветы
+# 5. Цветы
 # ----------------------------------------------------------------------------
 
-for k in range(16):
-    a = k / 16 * math.pi * 2 + math.pi / 16
-    x, _, z = ring_pos(CLEARING_R - 10, a)
-    yaw = yaw_to_center(x, z)
-    box("Base/Lamps", "LampPost", (1.5, 9, 1.5), (x, 4.9, z), C["wood_dark"], "Wood", yaw=yaw)
-    box("Base/Lamps", "LampCap", (3, 0.6, 3), (x, 11.9, z), C["wood_dark"], yaw=yaw)
-    box("Base/Lamps", "LampLight", (2.4, 2.4, 2.4), (x, 10.4, z), C["lamp"], "Neon", yaw=yaw,
-        extra={"light_range": 30, "light_brightness": 2})
-
-# Деревянный забор по краю поляны, с проходами у троп
-FENCE_R = CLEARING_R - 3
-n_posts = 104
-for k in range(n_posts):
-    a = k / n_posts * math.pi * 2
-    x, _, z = ring_pos(FENCE_R, a)
-    if abs(x) < TRAIL_HALF + 4 or abs(z) < TRAIL_HALF + 4:
-        continue
-    box("Base/Fence", "FencePost", (1.2, 4, 1.2), (x, 2.4, z), C["wood"], "Wood")
-    a2 = (k + 1) / n_posts * math.pi * 2
-    x2, _, z2 = ring_pos(FENCE_R, a2)
-    if abs(x2) < TRAIL_HALF + 4 or abs(z2) < TRAIL_HALF + 4:
-        continue
-    mx, mz = (x + x2) / 2, (z + z2) / 2
-    seg = math.hypot(x2 - x, z2 - z)
-    tang = math.atan2(-(z2 - z), x2 - x)  # поворот, чтобы ось X рейки шла вдоль забора
-    for h in (1.6, 3.2):
-        box("Base/Fence", "FenceRail", (seg, 0.5, 0.5), (mx, h, mz), C["wood_dark"], "Wood", yaw=tang)
+# Фонари и забор убраны — поляна открыта для боя
 
 # Цветы на поляне (вне колец и троп)
 placed = 0
-while placed < 160:
-    r = rng.uniform(78, CLEARING_R - 16)
+while placed < 260:
+    r = rng.uniform(80, CLEARING_R - 10)
     a = rng.uniform(0, math.pi * 2)
     x, _, z = ring_pos(r, a)
     if abs(x) < TRAIL_HALF + 3 or abs(z) < TRAIL_HALF + 3:
