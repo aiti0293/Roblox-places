@@ -201,6 +201,7 @@ local function claimBase(player: Player)
 	if spawn and spawn:IsA("SpawnLocation") then
 		player.RespawnLocation = spawn
 	end
+	local gotKit = Save:ClaimStarterKit(player)
 	for slot, unitId in Save:GetPlots(player) do
 		local plot = plots[slot]
 		if plot and unitId ~= "" then
@@ -209,6 +210,9 @@ local function claimBase(player: Player)
 	end
 	refreshAll()
 	notify(player, "Welcome to your base!")
+	if gotKit then
+		notify(player, `Starter gift: {#GameConfig.StarterKit.Slots} free defenders guard the trails!`)
+	end
 end
 
 local function releaseBase()

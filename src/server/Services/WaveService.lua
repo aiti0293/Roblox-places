@@ -29,6 +29,7 @@ export type Enemy = {
 	Info: DataConfig.EnemyInfo,
 	Model: Model,
 	HP: number,
+	MaxHP: number,
 	Alive: boolean,
 	Position: Vector3, -- ground position
 	AimOffset: number, -- height of the body center above the ground
@@ -154,10 +155,13 @@ local function spawnEnemy(id: string)
 	local side = point.CFrame.RightVector * (math.random() * 6 - 3)
 	local model = EnemyModels.Build(info.Model)
 	local height = model:GetExtentsSize().Y
+	-- Enemies get tougher every wave
+	local maxHP = math.floor(info.HP * (1 + WaveConfig.HPGrowth * math.max(0, waveNumber - 1)))
 	local enemy: Enemy = {
 		Info = info,
 		Model = model,
-		HP = info.HP,
+		HP = maxHP,
+		MaxHP = maxHP,
 		Alive = true,
 		Position = Vector3.new(point.Position.X, 0, point.Position.Z) + side,
 		AimOffset = height * 0.55,
@@ -175,7 +179,8 @@ local function onHallDestroyed()
 	hallDestroyed = true
 	local owner = BaseService.Owner
 	if owner then
-		local stolen = math.floor(Save:GetMoney(owner) * WaveConfig.LossShare)
+		local money = Save:GetMoney(owner)
+		local stolen = math.min(math.floor(money * WaveConfig.LossShare), math.max(0, money - WaveConfig.LossKeepMoney))
 		Save:SpendMoney(owner, stolen)
 		notifyOwner(`The Town Hall has fallen! The werewolves stole ${stolen}`)
 	end
@@ -344,7 +349,7 @@ function WaveService:DamageEnemy(enemy: Enemy, amount: number): boolean
 		return false
 	end
 	enemy.HP -= amount
-	enemy.Bar.Size = UDim2.fromScale(math.max(0, enemy.HP / enemy.Info.HP), 1)
+	enemy.Bar.Size = UDim2.fromScale(math.max(0, enemy.HP / enemy.MaxHP), 1)
 	if enemy.HP > 0 then
 		return false
 	end

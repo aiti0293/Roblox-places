@@ -214,6 +214,22 @@ function SaveService:SetPlot(player: Player, slot: string, value: string?): bool
 	return true
 end
 
+-- Gives the starter kit once: owned plots with free units. Returns true if given now.
+function SaveService:ClaimStarterKit(player: Player): boolean
+	local data = self:GetData(player)
+	if not data or data.StarterKitGiven then
+		return false
+	end
+	data.StarterKitGiven = true
+	local kit = GameConfig.StarterKit
+	for _, slot in kit.Slots do
+		if data.Plots[slot] == nil or data.Plots[slot] == "" then
+			data.Plots[slot] = kit.Unit
+		end
+	end
+	return true
+end
+
 ----------------------------------------------------------------------
 -- API: stats
 ----------------------------------------------------------------------

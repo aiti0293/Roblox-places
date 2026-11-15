@@ -42,6 +42,10 @@ DataConfig.GameConfig = table.freeze({
 	MoneyCapacity = 2000, -- money limit (will grow with Town Hall level later)
 	SellRefund = 0.5, -- share of the unit price returned when selling
 
+	-- Starter kit: given once to every player (also to existing profiles).
+	-- Slots 1, 8, 15, 22 of the inner ring face the 4 forest trails.
+	StarterKit = table.freeze({ Unit = "Chomper", Slots = table.freeze({ "1", "8", "15", "22" }) }),
+
 	-- Base / plots (must match the map: Workspace.Base.BrainrotPlots/Plot1..PlotN)
 	PlotCount = 116,
 	PlotPriceByRow = { 50, 150, 400 }, -- row 1 = inner ring, row 3 = outer ring
@@ -89,22 +93,24 @@ export type EnemyInfo = {
 }
 
 DataConfig.EnemyConfig = table.freeze({
-	Werewolf = { Id = "Werewolf", DisplayName = "Werewolf", HP = 60, Speed = 9, Damage = 15, AttackRate = 1, Reward = 20, Model = "Werewolf" },
+	Werewolf = { Id = "Werewolf", DisplayName = "Werewolf", HP = 40, Speed = 9, Damage = 15, AttackRate = 1, Reward = 20, Model = "Werewolf" },
 	Brute = { Id = "Brute", DisplayName = "Werewolf Brute", HP = 220, Speed = 7, Damage = 40, AttackRate = 0.8, Reward = 60, Model = "Brute" },
 } :: { [string]: EnemyInfo })
 
 DataConfig.WaveConfig = table.freeze({
-	FirstWaveDelay = 15, -- seconds before the first wave after the owner joins
-	Intermission = 20, -- seconds between waves
-	BaseCount = 4, -- werewolves in wave 1
+	FirstWaveDelay = 30, -- seconds before the first wave after the owner joins
+	Intermission = 25, -- seconds between waves
+	BaseCount = 3, -- werewolves in wave 1
 	CountPerWave = 2, -- +werewolves every wave
 	BruteEvery = 3, -- one brute per 3 waves (wave 3: 1, wave 6: 2, ...)
 	SpawnInterval = 1, -- seconds between spawns
-	WaveClearBonus = 50, -- money for surviving a wave
+	WaveClearBonus = 75, -- money for surviving a wave
+	HPGrowth = 0.12, -- enemy HP grows by 12% every wave
 
 	TownHallMaxHP = 1000,
 	TownHallAttackRadius = 16, -- enemies stop and bite at this distance from the center
-	LossShare = 0.5, -- share of money stolen when the Town Hall falls
+	LossShare = 0.25, -- share of money stolen when the Town Hall falls
+	LossKeepMoney = 100, -- never steal below this, so a defender can always be bought
 })
 
 ----------------------------------------------------------------------
@@ -117,6 +123,7 @@ DataConfig.ProfileTemplate = table.freeze({
 	-- Owned plots: [slot "1".."PlotCount"] = unitId, or "" for an owned empty plot.
 	-- A slot that is missing from the table is not bought yet.
 	Plots = {} :: { [string]: string },
+	StarterKitGiven = false,
 	Stats = {
 		UnitsPlaced = 0,
 		WavesSurvived = 0,
