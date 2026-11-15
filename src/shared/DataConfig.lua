@@ -75,6 +75,40 @@ DataConfig.UnitConfig = table.freeze({
 } :: { [string]: UnitInfo })
 
 ----------------------------------------------------------------------
+-- 3b. Enemies (voxel wolves from the forest, see EnemyModels) and waves
+----------------------------------------------------------------------
+
+export type EnemyInfo = {
+	Id: string,
+	DisplayName: string,
+	HP: number,
+	Speed: number, -- studs per second
+	Damage: number, -- per bite on the Town Hall
+	AttackRate: number, -- bites per second
+	Reward: number, -- money for the kill
+	Model: string, -- key in EnemyModels
+}
+
+DataConfig.EnemyConfig = table.freeze({
+	Wolf = { Id = "Wolf", DisplayName = "Wolf", HP = 40, Speed = 10, Damage = 10, AttackRate = 1, Reward = 15, Model = "Wolf" },
+	DireWolf = { Id = "DireWolf", DisplayName = "Dire Wolf", HP = 140, Speed = 8, Damage = 30, AttackRate = 0.8, Reward = 45, Model = "DireWolf" },
+} :: { [string]: EnemyInfo })
+
+DataConfig.WaveConfig = table.freeze({
+	FirstWaveDelay = 15, -- seconds before the first wave after the owner joins
+	Intermission = 20, -- seconds between waves
+	BaseCount = 4, -- wolves in wave 1
+	CountPerWave = 2, -- +wolves every wave
+	DireWolfEvery = 3, -- one dire wolf per 3 waves (wave 3: 1, wave 6: 2, ...)
+	SpawnInterval = 1, -- seconds between spawns
+	WaveClearBonus = 50, -- money for surviving a wave
+
+	TownHallMaxHP = 1000,
+	TownHallAttackRadius = 16, -- enemies stop and bite at this distance from the center
+	LossShare = 0.5, -- share of money stolen when the Town Hall falls
+})
+
+----------------------------------------------------------------------
 -- 4. Profile template (ProfileService). New fields added here are
 --    reconciled into old profiles automatically.
 ----------------------------------------------------------------------
@@ -110,6 +144,10 @@ DataConfig.Remotes = table.freeze({
 
 function DataConfig.GetUnit(id: string): UnitInfo?
 	return DataConfig.UnitConfig[id]
+end
+
+function DataConfig.GetEnemy(id: string): EnemyInfo?
+	return DataConfig.EnemyConfig[id]
 end
 
 function DataConfig.GetRarityOf(unitId: string): RarityInfo?

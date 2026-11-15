@@ -24,8 +24,8 @@ remotes.Parent = ReplicatedStorage
 local ORDER = {
 	"SaveService",
 	"BaseService",
-	"UnitService", -- next: units open their jaw and shoot at enemies
-	"WaveService", -- next: waves of monsters from the forest edges
+	"WaveService", -- waves of wolves from the forest edges
+	"UnitService", -- werewolves open their jaw and attack the wolves
 }
 
 local servicesFolder = script.Parent:WaitForChild("Services")
