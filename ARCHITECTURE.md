@@ -19,14 +19,15 @@ src/
 ├── shared/                         -> ReplicatedStorage.Shared
 │   ├── DataConfig.lua              — all constants: economy, rarities, units, profile template, remotes
 │   ├── VoxelModel.lua              — builds models out of small cube Parts (groups with hinges)
+│   ├── EnemyModels.lua             — voxel wolves (Wolf, DireWolf) with a biting jaw
 │   └── UnitModels.lua              — voxel werewolves: tall, muscular, black, bloody, long fangs (jaw = LowerJaw group)
 ├── server/                         -> ServerScriptService.Server
 │   ├── Main.server.lua             — entry point: Remotes + Init/Start of services
 │   └── Services/
 │       ├── SaveService.lua         — ProfileService: money (with cap), plots, stats
 │       ├── BaseService.lua         — base ownership, buy plot / place unit / sell unit
-│       ├── UnitService.lua         — (next) targeting, jaw opening, attacks by rarity
-│       └── WaveService.lua         — (next) enemy waves from Workspace.EnemySpawns
+│       ├── WaveService.lua         — wolf waves from Workspace.EnemySpawns, Town Hall HP
+│       └── UnitService.lua         — targeting, jaw opening, attacks by rarity
 └── client/                         -> StarterPlayerScripts.Client (later: HUD, shop UI)
 Packages/ProfileService.lua         -> ReplicatedStorage.Packages.ProfileService
 tools/
@@ -46,7 +47,7 @@ function MyService:Start() end         -- connect events, start loops
 return MyService
 ```
 
-`Main` loads services in a fixed order: `SaveService -> BaseService -> UnitService -> WaveService`.
+`Main` loads services in a fixed order: `SaveService -> BaseService -> WaveService -> UnitService`.
 Services talk through the `services` table passed to `Init` (no circular requires).
 
 ## State ("store")
