@@ -2,10 +2,10 @@
 	HUD — the on-screen interface (LocalScript in StarterPlayerScripts.Client).
 
 	  • Money with the storage limit          (player attributes Money / MoneyCap)
-	  • Wave number, countdown, wolves left   (Workspace.Base attributes WaveNumber / WaveState / NextWaveIn)
+	  • Wave number, countdown, enemies left (Workspace.Base attributes WaveNumber / WaveState / NextWaveIn)
 	  • Town Hall HP bar                      (Workspace.Base.TownHall attributes HP / MaxHP)
 	  • Notifications                         (Remotes.Notify)
-	  • Werewolf shop: opens when the player activates an empty owned plot
+	  • Defender shop: opens when the player activates an empty owned plot
 	    (Remotes.OpenShop); buying sends Remotes.RequestPlaceUnit.
 
 	The client only shows state and sends requests — the server validates everything.
@@ -43,7 +43,7 @@ local THEME = {
 local TITLE_FONT = Enum.Font.Fantasy
 local BODY_FONT = Enum.Font.GothamBold
 
-local UNIT_ORDER = { "Ripper", "Bloodfang", "Nightmaw", "Alpha" }
+local UNIT_ORDER = { "Chomper", "Firemaw", "Laserjaw", "Kingmaw" }
 
 ----------------------------------------------------------------------
 -- UI helpers
@@ -190,7 +190,7 @@ local function updateWave()
 	local n = base:GetAttribute("WaveNumber") or 0
 	if state == "Wave" then
 		waveTitle.Text = `WAVE {n}`
-		waveStatus.Text = `Wolves attacking — {enemiesLeft()} left`
+		waveStatus.Text = `Werewolves attacking — {enemiesLeft()} left`
 		waveStatus.TextColor3 = THEME.Blood
 	elseif state == "Intermission" then
 		waveTitle.Text = `WAVE {n + 1}`
@@ -258,7 +258,7 @@ end
 Remotes:WaitForChild("Notify").OnClientEvent:Connect(toast)
 
 ----------------------------------------------------------------------
--- Werewolf shop
+-- Defender shop
 ----------------------------------------------------------------------
 
 local currentSlot: string? = nil
@@ -282,7 +282,7 @@ local shop = panel({
 	BackgroundTransparency = 0.02,
 	ZIndex = 11,
 })
-text({ Parent = shop, Font = TITLE_FONT, Text = "SUMMON A WEREWOLF", Position = UDim2.fromOffset(0, 10), Size = UDim2.new(1, 0, 0, 38), TextColor3 = THEME.Gold, ZIndex = 12 })
+text({ Parent = shop, Font = TITLE_FONT, Text = "SUMMON A DEFENDER", Position = UDim2.fromOffset(0, 10), Size = UDim2.new(1, 0, 0, 38), TextColor3 = THEME.Gold, ZIndex = 12 })
 local shopSubtitle = text({ Parent = shop, Position = UDim2.fromOffset(0, 48), Size = UDim2.new(1, 0, 0, 18), TextColor3 = THEME.Muted, ZIndex = 12 })
 local closeButton = make("TextButton", {
 	Parent = shop,
@@ -334,7 +334,7 @@ local function buildCard(unitId: string, order: number)
 	}, { corner(8), stroke(rarity.Color, 2) })
 	make("Frame", { Parent = card, Size = UDim2.new(1, 0, 0, 6), BackgroundColor3 = rarity.Color, BorderSizePixel = 0, ZIndex = 13 }, { corner(8) })
 
-	-- 3D preview of the werewolf
+	-- 3D preview of the defender
 	local viewport = make("ViewportFrame", {
 		Parent = card,
 		Position = UDim2.fromOffset(6, 10),
@@ -350,7 +350,7 @@ local function buildCard(unitId: string, order: number)
 	model.Parent = viewport
 	table.insert(spinning, model)
 	local camera = make("Camera", { Parent = viewport, FieldOfView = 40 })
-	camera.CFrame = CFrame.lookAt(Vector3.new(4, 6.5, -14), Vector3.new(0, 4.3, 0))
+	camera.CFrame = CFrame.lookAt(Vector3.new(2.5, 3.2, -8), Vector3.new(0, 2.3, 0))
 	viewport.CurrentCamera = camera
 
 	text({ Parent = card, Font = TITLE_FONT, Text = info.DisplayName, Position = UDim2.fromOffset(6, 164), Size = UDim2.new(1, -12, 0, 28), ZIndex = 13 })

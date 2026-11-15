@@ -1,12 +1,12 @@
 --!strict
 --[[
-	WaveService — waves of voxel wolves coming out of the forest.
+	WaveService — waves of muscular voxel werewolves coming out of the forest.
 
 	Loop (only while the base has an owner):
-	  Intermission (countdown) -> Wave N: wolves spawn at Workspace.EnemySpawns,
+	  Intermission (countdown) -> Wave N: werewolves spawn at Workspace.EnemySpawns,
 	  walk straight to the Town Hall along the trails and bite it ->
-	  all wolves dead: +WaveClearBonus, next wave.
-	If the Town Hall HP reaches 0, the wolves steal LossShare of the owner's money,
+	  all werewolves dead: +WaveClearBonus, next wave.
+	If the Town Hall HP reaches 0, the werewolves steal LossShare of the owner's money,
 	the wave ends and the Town Hall is restored.
 
 	Enemies are anchored voxel models moved on the server every frame (no physics).
@@ -150,7 +150,7 @@ local function spawnEnemy(id: string)
 		return
 	end
 	local point = spawnPoints[math.random(#spawnPoints)]
-	-- Small sideways offset so wolves do not walk in a single line
+	-- Small sideways offset so they do not walk in a single line
 	local side = point.CFrame.RightVector * (math.random() * 6 - 3)
 	local model = EnemyModels.Build(info.Model)
 	local height = model:GetExtentsSize().Y
@@ -177,7 +177,7 @@ local function onHallDestroyed()
 	if owner then
 		local stolen = math.floor(Save:GetMoney(owner) * WaveConfig.LossShare)
 		Save:SpendMoney(owner, stolen)
-		notifyOwner(`The Town Hall has fallen! The wolves stole ${stolen}`)
+		notifyOwner(`The Town Hall has fallen! The werewolves stole ${stolen}`)
 	end
 	clearEnemies()
 	setHallHP(WaveConfig.TownHallMaxHP)
@@ -225,12 +225,12 @@ end
 
 local function waveComposition(n: number): { string }
 	local count = WaveConfig.BaseCount + WaveConfig.CountPerWave * (n - 1)
-	local dire = n // WaveConfig.DireWolfEvery
+	local brutes = n // WaveConfig.BruteEvery
 	local list = {}
 	for i = 1, count do
-		table.insert(list, if i <= dire then "DireWolf" else "Wolf")
+		table.insert(list, if i <= brutes then "Brute" else "Werewolf")
 	end
-	-- Shuffle so dire wolves are mixed in
+	-- Shuffle so brutes are mixed in
 	for i = #list, 2, -1 do
 		local j = math.random(i)
 		list[i], list[j] = list[j], list[i]

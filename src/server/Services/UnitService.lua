@@ -1,6 +1,6 @@
 --!strict
 --[[
-	UnitService — the werewolves on the plots defend the base.
+	UnitService — the monsters on the plots defend the base from the werewolves.
 
 	Every unit looks for the nearest enemy within its Range. When ready
 	(FireRate), it turns to the target, OPENS ITS LOWER JAW and fires

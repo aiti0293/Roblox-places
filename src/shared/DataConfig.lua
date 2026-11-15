@@ -63,18 +63,18 @@ DataConfig.Rarities = table.freeze({
 } :: { [RarityName]: RarityInfo })
 
 ----------------------------------------------------------------------
--- 3. Units (voxel werewolves, see UnitModels). Key = Id.
+-- 3. Units = defenders on the plots (voxel monsters with jaws, see UnitModels). Key = Id.
 ----------------------------------------------------------------------
 
 DataConfig.UnitConfig = table.freeze({
-	Ripper = { Id = "Ripper", DisplayName = "Ripper", Rarity = "Common", Price = 100, Damage = 10, Range = 30, FireRate = 1.0, Model = "Ripper" },
-	Bloodfang = { Id = "Bloodfang", DisplayName = "Bloodfang", Rarity = "Rare", Price = 400, Damage = 25, Range = 40, FireRate = 0.8, Model = "Bloodfang" },
-	Nightmaw = { Id = "Nightmaw", DisplayName = "Nightmaw", Rarity = "Epic", Price = 1200, Damage = 40, Range = 50, FireRate = 1.2, Model = "Nightmaw" },
-	Alpha = { Id = "Alpha", DisplayName = "Alpha", Rarity = "Legendary", Price = 3000, Damage = 90, Range = 60, FireRate = 1.0, Model = "Alpha" },
+	Chomper = { Id = "Chomper", DisplayName = "Chomper", Rarity = "Common", Price = 100, Damage = 10, Range = 30, FireRate = 1.0, Model = "Chomper" },
+	Firemaw = { Id = "Firemaw", DisplayName = "Firemaw", Rarity = "Rare", Price = 400, Damage = 25, Range = 40, FireRate = 0.8, Model = "Firemaw" },
+	Laserjaw = { Id = "Laserjaw", DisplayName = "Laserjaw", Rarity = "Epic", Price = 1200, Damage = 40, Range = 50, FireRate = 1.2, Model = "Laserjaw" },
+	Kingmaw = { Id = "Kingmaw", DisplayName = "Kingmaw", Rarity = "Legendary", Price = 3000, Damage = 90, Range = 60, FireRate = 1.0, Model = "Kingmaw" },
 } :: { [string]: UnitInfo })
 
 ----------------------------------------------------------------------
--- 3b. Enemies (voxel wolves from the forest, see EnemyModels) and waves
+-- 3b. Enemies = muscular voxel werewolves from the forest (see EnemyModels) and waves
 ----------------------------------------------------------------------
 
 export type EnemyInfo = {
@@ -89,16 +89,16 @@ export type EnemyInfo = {
 }
 
 DataConfig.EnemyConfig = table.freeze({
-	Wolf = { Id = "Wolf", DisplayName = "Wolf", HP = 40, Speed = 10, Damage = 10, AttackRate = 1, Reward = 15, Model = "Wolf" },
-	DireWolf = { Id = "DireWolf", DisplayName = "Dire Wolf", HP = 140, Speed = 8, Damage = 30, AttackRate = 0.8, Reward = 45, Model = "DireWolf" },
+	Werewolf = { Id = "Werewolf", DisplayName = "Werewolf", HP = 60, Speed = 9, Damage = 15, AttackRate = 1, Reward = 20, Model = "Werewolf" },
+	Brute = { Id = "Brute", DisplayName = "Werewolf Brute", HP = 220, Speed = 7, Damage = 40, AttackRate = 0.8, Reward = 60, Model = "Brute" },
 } :: { [string]: EnemyInfo })
 
 DataConfig.WaveConfig = table.freeze({
 	FirstWaveDelay = 15, -- seconds before the first wave after the owner joins
 	Intermission = 20, -- seconds between waves
-	BaseCount = 4, -- wolves in wave 1
-	CountPerWave = 2, -- +wolves every wave
-	DireWolfEvery = 3, -- one dire wolf per 3 waves (wave 3: 1, wave 6: 2, ...)
+	BaseCount = 4, -- werewolves in wave 1
+	CountPerWave = 2, -- +werewolves every wave
+	BruteEvery = 3, -- one brute per 3 waves (wave 3: 1, wave 6: 2, ...)
 	SpawnInterval = 1, -- seconds between spawns
 	WaveClearBonus = 50, -- money for surviving a wave
 

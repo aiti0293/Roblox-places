@@ -19,14 +19,14 @@ src/
 ├── shared/                         -> ReplicatedStorage.Shared
 │   ├── DataConfig.lua              — all constants: economy, rarities, units, profile template, remotes
 │   ├── VoxelModel.lua              — builds models out of small cube Parts (groups with hinges)
-│   ├── EnemyModels.lua             — voxel wolves (Wolf, DireWolf) with a biting jaw
-│   └── UnitModels.lua              — voxel werewolves: tall, muscular, black, bloody, long fangs (jaw = LowerJaw group)
+│   ├── EnemyModels.lua             — enemies: muscular black bloody voxel werewolves (Werewolf, Brute)
+│   └── UnitModels.lua              — defenders: voxel monsters with jaws (jaw = LowerJaw group)
 ├── server/                         -> ServerScriptService.Server
 │   ├── Main.server.lua             — entry point: Remotes + Init/Start of services
 │   └── Services/
 │       ├── SaveService.lua         — ProfileService: money (with cap), plots, stats
 │       ├── BaseService.lua         — base ownership, buy plot / place unit / sell unit
-│       ├── WaveService.lua         — wolf waves from Workspace.EnemySpawns, Town Hall HP
+│       ├── WaveService.lua         — werewolf waves from Workspace.EnemySpawns, Town Hall HP
 │       └── UnitService.lua         — targeting, jaw opening, attacks by rarity
 └── client/                         -> StarterPlayerScripts.Client (later: HUD, shop UI)
 Packages/ProfileService.lua         -> ReplicatedStorage.Packages.ProfileService
@@ -68,10 +68,10 @@ possible later without trusting the client.
 
 | Rarity | Attack | Example unit |
 |---|---|---|
-| Common | Bite (small cube projectile) | Ripper |
-| Rare | Fireball (glowing orange/red cube) | Bloodfang |
-| Epic | Laser (raycast beam) | Nightmaw |
-| Legendary | not designed yet (Laser for now) | Alpha |
+| Common | Bite (small cube projectile) | Chomper |
+| Rare | Fireball (glowing orange/red cube) | Firemaw |
+| Epic | Laser (raycast beam) | Laserjaw |
+| Legendary | not designed yet (Laser for now) | Kingmaw |
 
 Every unit has a `LowerJaw` model with a hinge: before firing it rotates by
 `UnitModels.JawOpenAngle` to open the mouth.

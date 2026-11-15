@@ -1,89 +1,147 @@
 --!strict
 --[[
-	EnemyModels — voxel wolves that come out of the forest (see VoxelModel).
-	Four legs, black fur, glowing eyes, bloody fangs, a LowerJaw group for biting.
-	DireWolf is the same wolf, bigger, with orange eyes. Faces -Z, origin = bottom center.
+	EnemyModels — the enemies: voxel werewolves that come out of the forest and
+	attack the Town Hall. Tall, hunched and muscular, black fur, blood stains,
+	glowing eyes and very long sharp fangs. The LowerJaw group (with lower fangs)
+	has a hinge at its back and swings open on every bite.
+	Brute is the same werewolf, bigger, with orange eyes and reddish muscles.
+	Faces -Z, origin = bottom center.
 ]]
 
 local VoxelModel = require(script.Parent.VoxelModel)
 
 local EnemyModels = {}
 
-EnemyModels.JawOpenAngle = math.rad(-35)
+EnemyModels.JawOpenAngle = math.rad(-40) -- negative = jaw swings down
 
 local V = Vector3.new
 
-local VOXELS: { VoxelModel.Voxel } = {
-	-- Body, chest, mane
-	{ Pos = V(0, 4, 0), Size = V(3.4, 2.6, 7), Color = "fur" },
-	{ Pos = V(0, 4.4, -2.6), Size = V(3.8, 3, 2.4), Color = "fur2" },
-	{ Pos = V(0, 5.9, -1.8), Size = V(3, 1, 3), Color = "dark" },
-	{ Pos = V(0, 6.6, -0.5), Size = V(1, 0.8, 1.2), Color = "dark" },
-	{ Pos = V(0, 6.4, 1), Size = V(1, 0.8, 1.2), Color = "dark" },
-	{ Pos = V(0.8, 4, -3.85), Size = V(0.8, 1, 0.15), Color = "blood" },
-	-- Legs and paws
-	{ Pos = V(-1.2, 1.5, -2.6), Size = V(1, 3, 1), Color = "fur" },
-	{ Pos = V(1.2, 1.5, -2.6), Size = V(1, 3, 1), Color = "fur" },
-	{ Pos = V(-1.2, 1.5, 2.4), Size = V(1, 3, 1.2), Color = "fur" },
-	{ Pos = V(1.2, 1.5, 2.4), Size = V(1, 3, 1.2), Color = "fur" },
-	{ Pos = V(-1.2, 0.25, -2.9), Size = V(1.2, 0.5, 1.6), Color = "dark" },
-	{ Pos = V(1.2, 0.25, -2.9), Size = V(1.2, 0.5, 1.6), Color = "dark" },
-	{ Pos = V(-1.2, 0.25, 2.2), Size = V(1.2, 0.5, 1.6), Color = "dark" },
-	{ Pos = V(1.2, 0.25, 2.2), Size = V(1.2, 0.5, 1.6), Color = "dark" },
+local voxels: { VoxelModel.Voxel } = {
+	-- Paws, digitigrade legs, hips
+	{ Pos = V(-2, 0.5, -1), Size = V(2.2, 1, 3.5), Color = "dark" },
+	{ Pos = V(2, 0.5, -1), Size = V(2.2, 1, 3.5), Color = "dark" },
+	{ Pos = V(-2, 2, 0.6), Size = V(1.6, 3, 1.6), Color = "fur" },
+	{ Pos = V(2, 2, 0.6), Size = V(1.6, 3, 1.6), Color = "fur" },
+	{ Pos = V(-2, 4.5, -0.3), Size = V(2.4, 2.5, 2.6), Color = "fur2" },
+	{ Pos = V(2, 4.5, -0.3), Size = V(2.4, 2.5, 2.6), Color = "fur2" },
+	{ Pos = V(0, 6, 0), Size = V(5, 1.6, 3.2), Color = "fur" },
 	-- Tail
-	{ Pos = V(0, 4.6, 4.2), Size = V(0.8, 0.8, 2), Color = "fur" },
-	{ Pos = V(0, 4.2, 5.4), Size = V(0.6, 0.6, 1), Color = "dark" },
-	-- Neck and inside of the mouth
-	{ Pos = V(0, 5.2, -3.9), Size = V(2.2, 2, 1.6), Color = "fur" },
-	{ Pos = V(0, 4.8, -6.7), Size = V(1, 0.2, 1.6), Color = "mouth" },
+	{ Pos = V(0, 5.8, 2.4), Size = V(1.2, 1.2, 2), Color = "fur" },
+	{ Pos = V(0, 5.1, 3.9), Size = V(1, 1, 1.6), Color = "dark" },
 
-	-- Head (UpperJaw)
-	{ Pos = V(0, 5.8, -5.2), Size = V(2.6, 2, 2), Color = "fur", Group = "UpperJaw" },
-	{ Pos = V(0, 5.3, -6.8), Size = V(1.4, 1, 1.8), Color = "fur", Group = "UpperJaw" },
-	{ Pos = V(0, 5.75, -7.75), Size = V(0.6, 0.4, 0.3), Color = "nose", Group = "UpperJaw" },
-	{ Pos = V(-0.75, 6.2, -6.25), Size = V(0.5, 0.3, 0.15), Color = "eye", Group = "UpperJaw" },
-	{ Pos = V(0.75, 6.2, -6.25), Size = V(0.5, 0.3, 0.15), Color = "eye", Group = "UpperJaw" },
-	{ Pos = V(-0.8, 7.2, -4.9), Size = V(0.6, 1, 0.6), Color = "dark", Group = "UpperJaw" },
-	{ Pos = V(0.8, 7.2, -4.9), Size = V(0.6, 1, 0.6), Color = "dark", Group = "UpperJaw" },
-	{ Pos = V(-0.45, 4.5, -7.4), Size = V(0.25, 0.9, 0.25), Color = "tooth", Group = "UpperJaw" },
-	{ Pos = V(0.45, 4.5, -7.4), Size = V(0.25, 0.9, 0.25), Color = "tooth", Group = "UpperJaw" },
+	-- Torso: abdomen, huge chest, traps
+	{ Pos = V(0, 7.8, -0.2), Size = V(4.4, 2.4, 3), Color = "fur" },
+	{ Pos = V(0, 10.3, -0.8), Size = V(7, 3, 4), Color = "fur" },
+	{ Pos = V(0, 12.2, 0), Size = V(8.4, 1.6, 3.6), Color = "fur" },
+	-- Muscles: pecs and abs
+	{ Pos = V(-1.4, 10.4, -2.95), Size = V(2.4, 2, 0.4), Color = "fur2" },
+	{ Pos = V(1.4, 10.4, -2.95), Size = V(2.4, 2, 0.4), Color = "fur2" },
+	{ Pos = V(-0.7, 8.4, -1.85), Size = V(1.2, 0.8, 0.4), Color = "fur2" },
+	{ Pos = V(0.7, 8.4, -1.85), Size = V(1.2, 0.8, 0.4), Color = "fur2" },
+	{ Pos = V(-0.7, 7.4, -1.85), Size = V(1.2, 0.8, 0.4), Color = "fur2" },
+	{ Pos = V(0.7, 7.4, -1.85), Size = V(1.2, 0.8, 0.4), Color = "fur2" },
+	-- Mane spikes along the back
+	{ Pos = V(-1.6, 13.3, 1.3), Size = V(1, 1.2, 1.6), Color = "dark" },
+	{ Pos = V(0, 13.7, 1.5), Size = V(1.2, 1.6, 1.8), Color = "dark" },
+	{ Pos = V(1.6, 13.3, 1.3), Size = V(1, 1.2, 1.6), Color = "dark" },
+	{ Pos = V(0, 11, 1.6), Size = V(2.4, 1.2, 1), Color = "dark" },
 
-	-- Lower jaw
-	{ Pos = V(0, 4.5, -6.7), Size = V(1.2, 0.6, 1.8), Color = "fur", Group = "LowerJaw" },
-	{ Pos = V(-0.3, 5, -7.5), Size = V(0.2, 0.6, 0.2), Color = "tooth", Group = "LowerJaw" },
-	{ Pos = V(0.3, 5, -7.5), Size = V(0.2, 0.6, 0.2), Color = "tooth", Group = "LowerJaw" },
-	{ Pos = V(0, 4.15, -7.2), Size = V(0.8, 0.2, 0.6), Color = "blood", Group = "LowerJaw" },
+	-- Arms: shoulders, upper arms, big forearms, hands with long claws
+	{ Pos = V(-4.4, 11.6, -0.6), Size = V(2.6, 2.6, 2.8), Color = "fur2" },
+	{ Pos = V(4.4, 11.6, -0.6), Size = V(2.6, 2.6, 2.8), Color = "fur2" },
+	{ Pos = V(-4.9, 9.3, -0.8), Size = V(2.2, 3.2, 2.2), Color = "fur" },
+	{ Pos = V(4.9, 9.3, -0.8), Size = V(2.2, 3.2, 2.2), Color = "fur" },
+	{ Pos = V(-5.2, 6.5, -1.4), Size = V(2.6, 3, 2.6), Color = "fur2" },
+	{ Pos = V(5.2, 6.5, -1.4), Size = V(2.6, 3, 2.6), Color = "fur2" },
+	{ Pos = V(-5.3, 4.4, -1.8), Size = V(2.4, 1.4, 2.4), Color = "dark" },
+	{ Pos = V(5.3, 4.4, -1.8), Size = V(2.4, 1.4, 2.4), Color = "dark" },
+
+	-- Neck
+	{ Pos = V(0, 12.7, -1.7), Size = V(3, 1.6, 2.4), Color = "fur" },
+	-- Inside of the mouth (visible when the jaw opens)
+	{ Pos = V(0, 12.95, -5), Size = V(2, 0.4, 2.6), Color = "mouth" },
+
+	-- Blood: chest splatter, abs, chin
+	{ Pos = V(1.3, 9.6, -3.2), Size = V(1.6, 1.2, 0.2), Color = "blood" },
+	{ Pos = V(0.6, 9, -3.2), Size = V(0.4, 1, 0.2), Color = "blood" },
+	{ Pos = V(-0.9, 7.9, -2.1), Size = V(0.8, 0.5, 0.2), Color = "blood" },
+
+	-- HEAD (UpperJaw): skull, snout, nose, glowing eyes, brow, ears
+	{ Pos = V(0, 14.2, -2.6), Size = V(4, 3, 3.6), Color = "fur", Group = "UpperJaw" },
+	{ Pos = V(0, 13.8, -5.4), Size = V(2.6, 1.6, 2.6), Color = "fur", Group = "UpperJaw" },
+	{ Pos = V(0, 14.5, -6.8), Size = V(1, 0.6, 0.4), Color = "nose", Group = "UpperJaw" },
+	{ Pos = V(-1.1, 14.8, -4.45), Size = V(0.9, 0.5, 0.2), Color = "eye", Group = "UpperJaw" },
+	{ Pos = V(1.1, 14.8, -4.45), Size = V(0.9, 0.5, 0.2), Color = "eye", Group = "UpperJaw" },
+	{ Pos = V(0, 15.4, -4.3), Size = V(3.8, 0.6, 0.8), Color = "dark", Group = "UpperJaw" },
+	{ Pos = V(-1.4, 16.6, -2.2), Size = V(1, 2.2, 1), Color = "fur", Group = "UpperJaw" },
+	{ Pos = V(1.4, 16.6, -2.2), Size = V(1, 2.2, 1), Color = "fur", Group = "UpperJaw" },
+	{ Pos = V(-1.4, 17.9, -2.2), Size = V(0.6, 0.6, 0.6), Color = "dark", Group = "UpperJaw" },
+	{ Pos = V(1.4, 17.9, -2.2), Size = V(0.6, 0.6, 0.6), Color = "dark", Group = "UpperJaw" },
+	-- Upper teeth: two very long fangs + small teeth
+	{ Pos = V(-1.0, 12.1, -6.75), Size = V(0.4, 2, 0.4), Color = "tooth", Group = "UpperJaw" },
+	{ Pos = V(1.0, 12.1, -6.75), Size = V(0.4, 2, 0.4), Color = "tooth", Group = "UpperJaw" },
+	{ Pos = V(-0.3, 12.6, -6.5), Size = V(0.3, 0.8, 0.3), Color = "tooth", Group = "UpperJaw" },
+	{ Pos = V(0.3, 12.6, -6.5), Size = V(0.3, 0.8, 0.3), Color = "tooth", Group = "UpperJaw" },
+	{ Pos = V(-1.15, 12.6, -5.3), Size = V(0.3, 0.8, 0.3), Color = "tooth", Group = "UpperJaw" },
+	{ Pos = V(1.15, 12.6, -5.3), Size = V(0.3, 0.8, 0.3), Color = "tooth", Group = "UpperJaw" },
+	-- Blood on the upper fangs
+	{ Pos = V(-1.0, 11.05, -6.75), Size = V(0.42, 0.3, 0.42), Color = "blood", Group = "UpperJaw" },
+	{ Pos = V(1.0, 11.05, -6.75), Size = V(0.42, 0.3, 0.42), Color = "blood", Group = "UpperJaw" },
+
+	-- LOWER JAW: jaw, lower fangs sticking up in front of the snout, bloody chin
+	{ Pos = V(0, 12.4, -5.2), Size = V(2.4, 1, 2.8), Color = "fur", Group = "LowerJaw" },
+	{ Pos = V(-0.5, 13.4, -6.85), Size = V(0.35, 1.6, 0.35), Color = "tooth", Group = "LowerJaw" },
+	{ Pos = V(0.5, 13.4, -6.85), Size = V(0.35, 1.6, 0.35), Color = "tooth", Group = "LowerJaw" },
+	{ Pos = V(0, 12.95, -6.6), Size = V(1, 0.5, 0.3), Color = "tooth", Group = "LowerJaw" },
+	{ Pos = V(0, 11.8, -6.2), Size = V(1.4, 0.3, 0.8), Color = "blood", Group = "LowerJaw" },
 }
 
-local PALETTE = {
-	fur = Color3.fromRGB(28, 26, 30),
-	fur2 = Color3.fromRGB(44, 40, 46),
-	dark = Color3.fromRGB(12, 11, 13),
-	nose = Color3.fromRGB(5, 5, 5),
-	eye = Color3.fromRGB(255, 40, 30),
-	tooth = Color3.fromRGB(236, 230, 212),
-	blood = Color3.fromRGB(125, 0, 10),
-	mouth = Color3.fromRGB(70, 0, 8),
-}
+-- Long claws with bloody tips (3 per hand)
+for _, side in { -1, 1 } do
+	for _, dx in { -0.8, 0, 0.8 } do
+		table.insert(voxels, { Pos = V(side * 5.3 + dx, 3.0, -2.5), Size = V(0.4, 1.6, 0.4), Color = "tooth" })
+		table.insert(voxels, { Pos = V(side * 5.3 + dx, 2.05, -2.5), Size = V(0.42, 0.4, 0.42), Color = "blood" })
+	end
+	-- Toe claws
+	for _, dx in { -0.7, 0, 0.7 } do
+		table.insert(voxels, { Pos = V(side * 2 + dx, 0.35, -3.05), Size = V(0.4, 0.4, 0.7), Color = "tooth" })
+	end
+end
 
-local GROUPS = {
-	UpperJaw = { Hinge = V(0, 4.8, -5.6) },
-	LowerJaw = { Hinge = V(0, 4.8, -5.6) },
-}
-
-local DEFINITIONS: { [string]: VoxelModel.Definition } = {
-	Wolf = { VoxelSize = 0.45, Palette = PALETTE, Voxels = VOXELS, Groups = GROUPS, NeonColors = { eye = true } },
-	DireWolf = { VoxelSize = 0.7, Palette = PALETTE, Voxels = VOXELS, Groups = GROUPS, NeonColors = { eye = true } },
+local WEREWOLF: VoxelModel.Definition = {
+	VoxelSize = 0.5,
+	Palette = {
+		fur = Color3.fromRGB(24, 22, 26),
+		fur2 = Color3.fromRGB(40, 36, 42), -- muscle highlights
+		dark = Color3.fromRGB(10, 9, 11),
+		nose = Color3.fromRGB(5, 5, 5),
+		eye = Color3.fromRGB(255, 30, 30),
+		tooth = Color3.fromRGB(236, 230, 212),
+		blood = Color3.fromRGB(125, 0, 10),
+		mouth = Color3.fromRGB(70, 0, 8),
+	},
+	NeonColors = { eye = true },
+	Groups = {
+		UpperJaw = { Hinge = V(0, 12.9, -3.8) },
+		LowerJaw = { Hinge = V(0, 12.9, -3.8) },
+	},
+	Voxels = voxels,
 }
 
 local SKINS: { [string]: { [string]: Color3 }? } = {
-	Wolf = nil,
-	DireWolf = { eye = Color3.fromRGB(255, 150, 20), fur2 = Color3.fromRGB(60, 32, 28) },
+	Werewolf = nil, -- red eyes
+	Brute = { eye = Color3.fromRGB(255, 140, 20), fur2 = Color3.fromRGB(58, 30, 26) },
+}
+
+local SIZES: { [string]: number } = {
+	Werewolf = 0.5, -- ~9 studs tall
+	Brute = 0.7, -- ~12.5 studs tall
 }
 
 -- Builds an enemy model at the origin (bottom center, facing -Z)
 function EnemyModels.Build(modelKey: string): Model
-	local def = DEFINITIONS[modelKey] or DEFINITIONS.Wolf
+	local def = table.clone(WEREWOLF)
+	def.VoxelSize = SIZES[modelKey] or 0.5
 	return VoxelModel.Build(def, modelKey, SKINS[modelKey])
 end
 
