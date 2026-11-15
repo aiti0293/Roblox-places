@@ -5,7 +5,8 @@
 	• The base (Workspace.Base) belongs to one owner: the first player whose profile loads.
 	  Other players on the server are visitors for now (raids come later).
 	• Plot flow:  locked --buy (money)--> owned & empty --place unit (money)--> unit
-	              unit --sell (refund)--> owned & empty
+	              unit --upgrade (money, E)--> unit Lv+1 (max MaxUnitLevel)
+	              unit --sell (hold F, refund of everything invested)--> owned & empty
 	• All plot data lives in the profile (SaveService), so the base re-appears
 	  exactly the same after a rejoin. Leaving clears the base for the next owner.
 	• Interaction: a ProximityPrompt on every plot (always validated on the server),
@@ -36,13 +37,14 @@ type PlotState = {
 	Pedestal: BasePart,
 	Spot: BasePart,
 	Glows: { BasePart },
-	Prompt: ProximityPrompt,
+	Prompt: ProximityPrompt, -- E: buy / shop / upgrade
+	SellPrompt: ProximityPrompt, -- F (hold): sell
 	Unit: Model?,
 }
 
 local LOCKED_COLOR = Color3.fromRGB(120, 125, 140)
 local OWNED_COLOR = Color3.fromRGB(150, 230, 255)
-local SELL_HOLD_TIME = 1 -- hold E this long to sell (prevents accidents)
+local SELL_HOLD_TIME = 1 -- hold F this long to sell (prevents accidents)
 
 local BaseService = {}
 BaseService.Owner = nil :: Player?
@@ -77,7 +79,27 @@ local function despawnUnit(plot: PlotState)
 	end
 end
 
-local function spawnUnit(plot: PlotState, unitId: string)
+-- "Lv 3 ★★★" above the unit, in its rarity color
+local function levelBadge(model: Model, info: DataConfig.UnitInfo, level: number)
+	local rarity = DataConfig.Rarities[info.Rarity]
+	local gui = Instance.new("BillboardGui")
+	gui.Name = "LevelBadge"
+	gui.Size = UDim2.fromOffset(90, 22)
+	gui.StudsOffset = Vector3.new(0, model:GetExtentsSize().Y + 0.8, 0)
+	gui.MaxDistance = 60
+	local label = Instance.new("TextLabel")
+	label.Size = UDim2.fromScale(1, 1)
+	label.BackgroundTransparency = 1
+	label.Font = Enum.Font.GothamBold
+	label.TextScaled = true
+	label.TextColor3 = rarity.Color
+	label.TextStrokeTransparency = 0.2
+	label.Text = `Lv {level} ` .. string.rep("★", level)
+	label.Parent = gui
+	gui.Parent = model.PrimaryPart
+end
+
+local function spawnUnit(plot: PlotState, unitId: string, level: number)
 	despawnUnit(plot)
 	local info = DataConfig.GetUnit(unitId)
 	if not info then
@@ -87,7 +109,11 @@ local function spawnUnit(plot: PlotState, unitId: string)
 	model.Name = "Unit"
 	model:SetAttribute("UnitId", unitId)
 	model:SetAttribute("Slot", plot.Slot)
+	model:SetAttribute("Level", level)
 	model:PivotTo(unitCFrame(plot))
+	-- Higher level = slightly bigger monster (scales around its feet)
+	model:ScaleTo(1 + GameConfig.UpgradeScale * (level - 1))
+	levelBadge(model, info, level)
 	model.Parent = plot.Model
 	plot.Unit = model
 end
@@ -114,10 +140,24 @@ local function refreshPlot(plot: PlotState)
 		prompt.ObjectText = "Shop"
 		prompt.HoldDuration = 0
 	else
-		local unit = DataConfig.GetUnit(value)
-		prompt.ActionText = "Sell"
-		prompt.ObjectText = `{unit and unit.DisplayName or value}  +${unit and math.floor(unit.Price * GameConfig.SellRefund) or 0}`
-		prompt.HoldDuration = SELL_HOLD_TIME
+		local level = Save:GetPlotLevel(owner, plot.Slot)
+		local cost = DataConfig.GetUpgradeCost(value, level)
+		if cost then
+			prompt.ActionText = `Upgrade to Lv {level + 1}`
+			prompt.ObjectText = `${cost}`
+		else
+			prompt.ActionText = "Max level"
+			prompt.ObjectText = ""
+		end
+		prompt.HoldDuration = 0
+	end
+
+	-- Sell prompt (hold F): only on plots with a unit
+	local hasUnit = owner ~= nil and value ~= nil and value ~= ""
+	plot.SellPrompt.Enabled = hasUnit
+	if hasUnit then
+		local invested = DataConfig.GetInvested(value :: string, Save:GetPlotLevel(owner, plot.Slot))
+		plot.SellPrompt.ObjectText = `+${math.floor(invested * GameConfig.SellRefund)}`
 	end
 end
 
@@ -164,7 +204,7 @@ function BaseService:PlaceUnit(player: Player, slot: string, unitId: string): bo
 	end
 	Save:SetPlot(player, slot, unitId)
 	Save:IncrementStat(player, "UnitsPlaced")
-	spawnUnit(plot, unitId)
+	spawnUnit(plot, unitId, 1)
 	refreshPlot(plot)
 	return true
 end
@@ -179,13 +219,41 @@ function BaseService:SellUnit(player: Player, slot: string): boolean
 	if not info then
 		return false
 	end
+	local refund = math.floor(DataConfig.GetInvested(info.Id, Save:GetPlotLevel(player, slot)) * GameConfig.SellRefund)
 	Save:SetPlot(player, slot, "")
 	despawnUnit(plot)
-	local added = Save:AddMoney(player, math.floor(info.Price * GameConfig.SellRefund))
-	if added < math.floor(info.Price * GameConfig.SellRefund) then
+	local added = Save:AddMoney(player, refund)
+	if added < refund then
 		notify(player, "Money storage is full — part of the refund was lost")
 	end
 	refreshPlot(plot)
+	return true
+end
+
+function BaseService:UpgradeUnit(player: Player, slot: string): boolean
+	local plot = plots[slot]
+	if not plot or not isOwner(player) then
+		return false
+	end
+	local unitId = Save:GetPlot(player, slot)
+	local info = unitId and DataConfig.GetUnit(unitId)
+	if not info then
+		return false
+	end
+	local level = Save:GetPlotLevel(player, slot)
+	local cost = DataConfig.GetUpgradeCost(info.Id, level)
+	if not cost then
+		notify(player, `{info.DisplayName} is already at max level`)
+		return false
+	end
+	if not Save:SpendMoney(player, cost) then
+		notify(player, `Not enough money: upgrade costs ${cost}`)
+		return false
+	end
+	Save:SetPlotLevel(player, slot, level + 1)
+	spawnUnit(plot, info.Id, level + 1)
+	refreshPlot(plot)
+	notify(player, `{info.DisplayName} is now level {level + 1}!`)
 	return true
 end
 
@@ -205,7 +273,7 @@ local function claimBase(player: Player)
 	for slot, unitId in Save:GetPlots(player) do
 		local plot = plots[slot]
 		if plot and unitId ~= "" then
-			spawnUnit(plot, unitId)
+			spawnUnit(plot, unitId, Save:GetPlotLevel(player, slot))
 		end
 	end
 	refreshAll()
@@ -274,6 +342,16 @@ local function collectPlots()
 		prompt.MaxActivationDistance = 8
 		prompt.RequiresLineOfSight = false
 		prompt.Parent = pedestal
+		local sellPrompt = Instance.new("ProximityPrompt")
+		sellPrompt.Name = "SellPrompt"
+		sellPrompt.ActionText = "Sell"
+		sellPrompt.KeyboardKeyCode = Enum.KeyCode.F
+		sellPrompt.HoldDuration = SELL_HOLD_TIME
+		sellPrompt.MaxActivationDistance = 8
+		sellPrompt.RequiresLineOfSight = false
+		sellPrompt.UIOffset = Vector2.new(0, 70) -- shown under the main prompt
+		sellPrompt.Enabled = false
+		sellPrompt.Parent = pedestal
 
 		local slot = tostring(index)
 		local plot: PlotState = {
@@ -284,6 +362,7 @@ local function collectPlots()
 			Spot = spot :: BasePart,
 			Glows = glows,
 			Prompt = prompt,
+			SellPrompt = sellPrompt,
 			Unit = nil,
 		}
 		plots[slot] = plot
@@ -298,6 +377,11 @@ local function collectPlots()
 				-- The client opens the defender shop and replies with RequestPlaceUnit
 				(remotes:FindFirstChild("OpenShop") :: RemoteEvent):FireClient(player, slot)
 			else
+				BaseService:UpgradeUnit(player, slot)
+			end
+		end)
+		sellPrompt.Triggered:Connect(function(player)
+			if isOwner(player) then
 				BaseService:SellUnit(player, slot)
 			end
 		end)
@@ -344,18 +428,21 @@ function BaseService:Start()
 	onRemote("RequestSellUnit", function(player, slot)
 		self:SellUnit(player, slot)
 	end)
+	onRemote("RequestUpgradeUnit", function(player, slot)
+		self:UpgradeUnit(player, slot)
+	end)
 end
 
 ----------------------------------------------------------------------
 -- API for other services (UnitService / WaveService later)
 ----------------------------------------------------------------------
 
--- All placed units: { Slot, UnitId, Model }
-function BaseService:GetPlacedUnits(): { { Slot: string, UnitId: string, Model: Model } }
+-- All placed units: { Slot, UnitId, Level, Model }
+function BaseService:GetPlacedUnits(): { { Slot: string, UnitId: string, Level: number, Model: Model } }
 	local list = {}
 	for slot, plot in plots do
 		if plot.Unit then
-			table.insert(list, { Slot = slot, UnitId = plot.Unit:GetAttribute("UnitId") :: string, Model = plot.Unit })
+			table.insert(list, { Slot = slot, UnitId = plot.Unit:GetAttribute("UnitId") :: string, Level = plot.Unit:GetAttribute("Level") or 1, Model = plot.Unit })
 		end
 	end
 	return list

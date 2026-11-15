@@ -46,6 +46,22 @@ DataConfig.GameConfig = table.freeze({
 	-- Slots 1, 8, 15, 22 of the inner ring face the 4 forest trails.
 	StarterKit = table.freeze({ Unit = "Chomper", Slots = table.freeze({ "1", "8", "15", "22" }) }),
 
+	-- Unit upgrades (levels 1..MaxUnitLevel)
+	MaxUnitLevel = 5,
+	UpgradeCostFactor = 0.8, -- Lv L -> L+1 costs Price * factor * L
+	UpgradeDamage = 0.35, -- +35% damage per level
+	UpgradeRange = 0.08, -- +8% range per level
+	UpgradeFireRate = 0.1, -- +10% fire rate per level
+	UpgradeScale = 0.06, -- the model grows 6% per level
+
+	-- Unit upgrades (levels 1..MaxUnitLevel)
+	MaxUnitLevel = 5,
+	UpgradeCostFactor = 0.8, -- Lv L -> L+1 costs Price * factor * L
+	UpgradeDamage = 0.35, -- +35% damage per level
+	UpgradeRange = 0.08, -- +8% range per level
+	UpgradeFireRate = 0.1, -- +10% fire rate per level
+	UpgradeScale = 0.06, -- the model grows 6% per level
+
 	-- Base / plots (must match the map: Workspace.Base.BrainrotPlots/Plot1..PlotN)
 	PlotCount = 116,
 	PlotPriceByRow = { 50, 150, 400 }, -- row 1 = inner ring, row 3 = outer ring
@@ -124,6 +140,8 @@ DataConfig.ProfileTemplate = table.freeze({
 	-- A slot that is missing from the table is not bought yet.
 	Plots = {} :: { [string]: string },
 	StarterKitGiven = false,
+	PlotLevels = {} :: { [string]: number }, -- [slot] = unit level (missing = 1)
+	PlotLevels = {} :: { [string]: number }, -- [slot] = unit level (missing = 1)
 	Stats = {
 		UnitsPlaced = 0,
 		WavesSurvived = 0,
@@ -139,6 +157,8 @@ DataConfig.Remotes = table.freeze({
 	"RequestBuyPlot", -- (slot: string)
 	"RequestPlaceUnit", -- (slot: string, unitId: string)
 	"RequestSellUnit", -- (slot: string)
+	"RequestUpgradeUnit", -- (slot: string)
+	"RequestUpgradeUnit", -- (slot: string)
 
 	-- Server -> Client
 	"Notify", -- (message: string)
@@ -165,6 +185,82 @@ end
 function DataConfig.GetPlotPrice(row: number): number
 	local prices = DataConfig.GameConfig.PlotPriceByRow
 	return prices[math.clamp(row, 1, #prices)]
+end
+
+-- Unit stats at a level (level 1 = base stats)
+function DataConfig.GetUnitStats(unitId: string, level: number): { Damage: number, Range: number, FireRate: number }?
+	local unit = DataConfig.UnitConfig[unitId]
+	if not unit then
+		return nil
+	end
+	local gc = DataConfig.GameConfig
+	local l = math.clamp(level, 1, gc.MaxUnitLevel) - 1
+	return {
+		Damage = math.floor(unit.Damage * (1 + gc.UpgradeDamage * l) + 0.5),
+		Range = unit.Range * (1 + gc.UpgradeRange * l),
+		FireRate = unit.FireRate * (1 + gc.UpgradeFireRate * l),
+	}
+end
+
+-- Cost to go from `level` to `level + 1`, or nil at max level
+function DataConfig.GetUpgradeCost(unitId: string, level: number): number?
+	local unit = DataConfig.UnitConfig[unitId]
+	local gc = DataConfig.GameConfig
+	if not unit or level >= gc.MaxUnitLevel then
+		return nil
+	end
+	return math.floor(unit.Price * gc.UpgradeCostFactor * level)
+end
+
+-- Total money put into a unit (price + all upgrades up to `level`)
+function DataConfig.GetInvested(unitId: string, level: number): number
+	local unit = DataConfig.UnitConfig[unitId]
+	if not unit then
+		return 0
+	end
+	local total = unit.Price
+	for l = 1, level - 1 do
+		total += DataConfig.GetUpgradeCost(unitId, l) or 0
+	end
+	return total
+end
+
+-- Unit stats at a level (level 1 = base stats)
+function DataConfig.GetUnitStats(unitId: string, level: number): { Damage: number, Range: number, FireRate: number }?
+	local unit = DataConfig.UnitConfig[unitId]
+	if not unit then
+		return nil
+	end
+	local gc = DataConfig.GameConfig
+	local l = math.clamp(level, 1, gc.MaxUnitLevel) - 1
+	return {
+		Damage = math.floor(unit.Damage * (1 + gc.UpgradeDamage * l) + 0.5),
+		Range = unit.Range * (1 + gc.UpgradeRange * l),
+		FireRate = unit.FireRate * (1 + gc.UpgradeFireRate * l),
+	}
+end
+
+-- Cost to go from `level` to `level + 1`, or nil at max level
+function DataConfig.GetUpgradeCost(unitId: string, level: number): number?
+	local unit = DataConfig.UnitConfig[unitId]
+	local gc = DataConfig.GameConfig
+	if not unit or level >= gc.MaxUnitLevel then
+		return nil
+	end
+	return math.floor(unit.Price * gc.UpgradeCostFactor * level)
+end
+
+-- Total money put into a unit (price + all upgrades up to `level`)
+function DataConfig.GetInvested(unitId: string, level: number): number
+	local unit = DataConfig.UnitConfig[unitId]
+	if not unit then
+		return 0
+	end
+	local total = unit.Price
+	for l = 1, level - 1 do
+		total += DataConfig.GetUpgradeCost(unitId, l) or 0
+	end
+	return total
 end
 
 return table.freeze(DataConfig)

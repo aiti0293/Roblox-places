@@ -80,6 +80,22 @@ local function sanitizeData(data)
 			data.Plots[slot] = ""
 		end
 	end
+	for slot, level in data.PlotLevels do
+		local unitId = data.Plots[slot]
+		if not unitId or unitId == "" or type(level) ~= "number" then
+			data.PlotLevels[slot] = nil
+		else
+			data.PlotLevels[slot] = math.clamp(math.floor(level), 1, GameConfig.MaxUnitLevel)
+		end
+	end
+	for slot, level in data.PlotLevels do
+		local unitId = data.Plots[slot]
+		if not unitId or unitId == "" or type(level) ~= "number" then
+			data.PlotLevels[slot] = nil
+		else
+			data.PlotLevels[slot] = math.clamp(math.floor(level), 1, GameConfig.MaxUnitLevel)
+		end
+	end
 	data.Money = math.clamp(data.Money, 0, GameConfig.MoneyCapacity)
 end
 
@@ -211,6 +227,21 @@ function SaveService:SetPlot(player: Player, slot: string, value: string?): bool
 		return false
 	end
 	data.Plots[slot] = value
+	data.PlotLevels[slot] = nil -- a new / removed unit starts at level 1
+	return true
+end
+
+function SaveService:GetPlotLevel(player: Player, slot: string): number
+	local data = self:GetData(player)
+	return data and data.PlotLevels[slot] or 1
+end
+
+function SaveService:SetPlotLevel(player: Player, slot: string, level: number): boolean
+	local data = self:GetData(player)
+	if not data or not data.Plots[slot] or data.Plots[slot] == "" then
+		return false
+	end
+	data.PlotLevels[slot] = math.clamp(math.floor(level), 1, GameConfig.MaxUnitLevel)
 	return true
 end
 

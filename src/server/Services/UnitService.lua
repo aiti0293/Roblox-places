@@ -129,7 +129,7 @@ local function fireLaser(from: Vector3, target: any, damage: number, color: Colo
 	WaveService:DamageEnemy(target, damage)
 end
 
-local function attack(unit: Model, state: UnitState, info: DataConfig.UnitInfo, target: any)
+local function attack(unit: Model, state: UnitState, info: DataConfig.UnitInfo, damage: number, target: any)
 	faceTarget(unit, WaveService:GetAimPoint(target))
 	setJaw(unit, state, true)
 	local rarity = DataConfig.Rarities[info.Rarity]
@@ -139,9 +139,9 @@ local function attack(unit: Model, state: UnitState, info: DataConfig.UnitInfo, 
 		end
 		local from = mouthPosition(unit)
 		if rarity.AttackType == "Laser" then
-			fireLaser(from, target, info.Damage, rarity.Color)
+			fireLaser(from, target, damage, rarity.Color)
 		else
-			fireProjectile(from, target, info.Damage, ATTACKS[rarity.AttackType] or ATTACKS.Bite)
+			fireProjectile(from, target, damage, ATTACKS[rarity.AttackType] or ATTACKS.Bite)
 		end
 	end)
 	task.delay(JAW_CLOSE_DELAY, setJaw, unit, state, false)
@@ -158,17 +158,18 @@ local function think(dt: number)
 		if not info then
 			continue
 		end
+		local stats = DataConfig.GetUnitStats(placed.UnitId, placed.Level or 1) :: any
 		local state = states[model]
 		if not state then
-			state = { Cooldown = math.random() / info.FireRate, JawOpen = false }
+			state = { Cooldown = math.random() / stats.FireRate, JawOpen = false }
 			states[model] = state
 		end
 		state.Cooldown -= dt
 		if state.Cooldown <= 0 then
-			local target = findTarget(model:GetPivot().Position + Vector3.new(0, 4, 0), info.Range)
+			local target = findTarget(model:GetPivot().Position + Vector3.new(0, 4, 0), stats.Range)
 			if target then
-				state.Cooldown = 1 / info.FireRate
-				attack(model, state, info, target)
+				state.Cooldown = 1 / stats.FireRate
+				attack(model, state, info, stats.Damage, target)
 			end
 		end
 	end

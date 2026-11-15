@@ -278,12 +278,13 @@ local shop = panel({
 	Parent = overlay,
 	AnchorPoint = Vector2.new(0.5, 0.5),
 	Position = UDim2.fromScale(0.5, 0.5),
-	Size = UDim2.fromOffset(780, 420),
+	Size = UDim2.fromOffset(780, 450),
 	BackgroundTransparency = 0.02,
 	ZIndex = 11,
 })
 text({ Parent = shop, Font = TITLE_FONT, Text = "SUMMON A DEFENDER", Position = UDim2.fromOffset(0, 10), Size = UDim2.new(1, 0, 0, 38), TextColor3 = THEME.Gold, ZIndex = 12 })
 local shopSubtitle = text({ Parent = shop, Position = UDim2.fromOffset(0, 48), Size = UDim2.new(1, 0, 0, 18), TextColor3 = THEME.Muted, ZIndex = 12 })
+text({ Parent = shop, Text = "Tip: walk up to a defender — E to upgrade, hold F to sell", AnchorPoint = Vector2.new(0, 1), Position = UDim2.new(0, 0, 1, -10), Size = UDim2.new(1, 0, 0, 16), TextColor3 = THEME.Muted, ZIndex = 12 })
 local closeButton = make("TextButton", {
 	Parent = shop,
 	Text = "X",
@@ -300,7 +301,7 @@ local closeButton = make("TextButton", {
 local cards = make("Frame", {
 	Parent = shop,
 	Position = UDim2.fromOffset(20, 80),
-	Size = UDim2.new(1, -40, 1, -96),
+	Size = UDim2.new(1, -40, 1, -126),
 	BackgroundTransparency = 1,
 	ZIndex = 11,
 }, {
