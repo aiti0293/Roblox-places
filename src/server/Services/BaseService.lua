@@ -9,7 +9,8 @@
 	• All plot data lives in the profile (SaveService), so the base re-appears
 	  exactly the same after a rejoin. Leaving clears the base for the next owner.
 	• Interaction: a ProximityPrompt on every plot (always validated on the server),
-	  plus RemoteEvents (RequestBuyPlot / RequestPlaceUnit / RequestSellUnit) for the future UI.
+	  plus RemoteEvents (RequestBuyPlot / RequestPlaceUnit / RequestSellUnit).
+	  An empty owned plot opens the werewolf shop on the client (Remotes.OpenShop).
 
 	Map contract (built by tools/ImportBlenderMap.lua):
 	  Workspace.Base.SpawnLocation
@@ -109,9 +110,8 @@ local function refreshPlot(plot: PlotState)
 		prompt.ObjectText = `${DataConfig.GetPlotPrice(plot.Row)}`
 		prompt.HoldDuration = 0
 	elseif value == "" then
-		local unit = DataConfig.GetUnit(GameConfig.DefaultUnit)
-		prompt.ActionText = `Place {unit and unit.DisplayName or "unit"}`
-		prompt.ObjectText = `${unit and unit.Price or 0}`
+		prompt.ActionText = "Summon werewolf"
+		prompt.ObjectText = "Shop"
 		prompt.HoldDuration = 0
 	else
 		local unit = DataConfig.GetUnit(value)
@@ -291,7 +291,8 @@ local function collectPlots()
 			elseif value == nil then
 				BaseService:BuyPlot(player, slot)
 			elseif value == "" then
-				BaseService:PlaceUnit(player, slot, GameConfig.DefaultUnit)
+				-- The client opens the werewolf shop and replies with RequestPlaceUnit
+				(remotes:FindFirstChild("OpenShop") :: RemoteEvent):FireClient(player, slot)
 			else
 				BaseService:SellUnit(player, slot)
 			end

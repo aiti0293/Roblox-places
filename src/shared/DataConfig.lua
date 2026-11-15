@@ -45,7 +45,6 @@ DataConfig.GameConfig = table.freeze({
 	-- Base / plots (must match the map: Workspace.Base.BrainrotPlots/Plot1..PlotN)
 	PlotCount = 116,
 	PlotPriceByRow = { 50, 150, 400 }, -- row 1 = inner ring, row 3 = outer ring
-	DefaultUnit = "Ripper", -- unit placed by the plot prompt (until the shop UI exists)
 
 	-- Persistence
 	ProfileStoreName = "PlayerData_v2",
@@ -136,6 +135,7 @@ DataConfig.Remotes = table.freeze({
 
 	-- Server -> Client
 	"Notify", -- (message: string)
+	"OpenShop", -- (slot: string) the player activated an empty owned plot
 })
 
 ----------------------------------------------------------------------
